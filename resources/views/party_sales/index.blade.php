@@ -118,11 +118,15 @@
                         <tr>
                             <td>{{ $serial++ }}</td>
                             <td class="customer-name">
-                                <input type="text"
-                                    class="form-control w-100"
-                                    name="sales[{{ $sale->id }}][customer_name]"
-                                    value="{{ $sale->customer_name }}">
-                                
+                                <select name="sales[{{ $sale->id }}][customer_id]" class="form-control w-100">
+                                    {{-- <option value="">Select Customer</option> --}}
+                                    @foreach($customers as $customer)
+                                        <option value="{{ $customer->id }}" 
+                                            {{ $sale->customer_id == $customer->id ? 'selected' : '' }}>
+                                            {{ $customer->name }} ({{ $customer->beat->name ?? 'No Beat' }})
+                                        </option>
+                                    @endforeach
+                                </select>
                                 @if($sale->modified)
                                     <span class="badge bg-success ms-2">Modified</span>
                                 @endif
@@ -348,10 +352,11 @@
                     const customerCell = row.querySelector('.customer-name');
 
                     if (!customerCell) return;
-                    const input = customerCell.querySelector('input[name*="[customer_name]"]');
-                    if (!input) return;
 
-                    const customerName = input.value.toLowerCase();
+                    const select  = customerCell.querySelector('select[name*="[customer_id]"]');
+                    if (!select ) return;
+                    
+                    const customerName = select.options[select.selectedIndex].text.toLowerCase();
                     
                     if (customerName.includes(searchValue)) {
                         row.style.display = '';
