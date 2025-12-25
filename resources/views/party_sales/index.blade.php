@@ -48,7 +48,9 @@
         </form>
 
         <a href="{{ route('party-sales.create') }}" class="btn btn-primary mb-3">Add New</a>
-        <a href="{{ route('party-sales.download', request()->all()) }}" class="btn btn-success mb-3">Download Excel</a>
+        @if($sales->isNotEmpty())
+            <a href="{{ route('party-sales.download', request()->all()) }}" class="btn btn-success mb-3">Download Excel</a>
+        @endif
 
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
@@ -273,8 +275,10 @@
             const balanceInput = document.getElementById(`balance-${saleId}`);
             if (balance < 0) {
                 balanceInput.style.border = "2px solid green";
+                balanceInput.style.color = "green";
             } else {
                 balanceInput.style.border = "";
+                balanceInput.style.color = "black";
             }
             balanceInput.value = balance;
             updateTotals();
