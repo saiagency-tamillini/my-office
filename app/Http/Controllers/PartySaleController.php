@@ -159,7 +159,6 @@ class PartySaleController extends Controller
 
         $rowNo = 2;
         foreach ($grouped as $salesman => $salesGroup) {
-            
             // Salesman header row
             $sheet->mergeCells("A{$rowNo}:K{$rowNo}");
             $sheet->setCellValue("A{$rowNo}", $salesman);
@@ -178,13 +177,15 @@ class PartySaleController extends Controller
             $serial = 1;
             
             foreach ($salesGroup as $sale) {
-                // dd($sale);
+                $aging = $sale->bill_date
+                    ? \Carbon\Carbon::parse($sale->bill_date)->diffInDays(\Carbon\Carbon::today(), false)
+                    : 0;
                 $sheet->fromArray([
                     $serial++,
                     $sale->customer_name,
                     $sale->bill_no,
                     $sale->bill_date ? \Carbon\Carbon::parse($sale->bill_date)->format('d-m-Y') : '',
-                    $sale->aging,
+                    $aging,
                     $sale->amount,
                     $sale->cd,
                     $sale->product_return,
@@ -222,6 +223,7 @@ class PartySaleController extends Controller
                 'product_return'  => $data['product_return'] ?? $sale->product_return,
                 'online_payment'  => $data['online_payment'] ?? $sale->online_payment,
                 'amount_received' => $data['amount_received'] ?? $sale->amount_received,
+                'balance' => $data['balance'] ?? $sale->balance,
             ];
             if (isset($data['customer_name'])) {
                 $updateData['customer_name'] = $data['customer_name'];

@@ -47,10 +47,10 @@
             <input type="date" name="bill_date" id="bill_date" class="form-control" value="{{ $partySale->bill_date ? $partySale->bill_date->format('Y-m-d') : '' }}">
         </div>
 
-        <div class="mb-3">
+        {{-- <div class="mb-3">
             <label for="aging" class="form-label">Aging</label>
             <input type="text" name="aging" id="aging" class="form-control" value="{{ $partySale->aging }}">
-        </div>
+        </div> --}}
 
         <div class="mb-3">
             <label for="amount" class="form-label">Amount</label>
@@ -77,10 +77,10 @@
             <input type="text" name="amount_received" id="amount_received" class="form-control" value="{{ $partySale->amount_received }}">
         </div>
 
-        <div class="mb-3">
+        {{-- <div class="mb-3">
             <label for="balance" class="form-label">Balance</label>
             <input type="text" name="balance" id="balance" class="form-control" value="{{ $partySale->balance }}">
-        </div>
+        </div> --}}
         <div class="mb-3">
             <label for="remarks" class="form-label">Remarks</label>
             <input type="text" name="remarks" id="remarks" class="form-control" value="{{ $partySale->remarks }}">
