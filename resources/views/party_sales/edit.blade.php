@@ -85,6 +85,18 @@
             <label for="remarks" class="form-label">Remarks</label>
             <input type="text" name="remarks" id="remarks" class="form-control" value="{{ $partySale->remarks }}">
         </div>
+        <div class="mb-3 form-check">
+            <input type="checkbox"
+                name="modified"
+                id="modified"
+                class="form-check-input"
+                value="1"
+                {{ $partySale->modified ? 'checked' : '' }}>
+                
+            <label class="form-check-label" for="modified">
+                Mark as Modified
+            </label>
+        </div>
 
         <button type="submit" class="btn btn-primary">Update</button>
     </form>

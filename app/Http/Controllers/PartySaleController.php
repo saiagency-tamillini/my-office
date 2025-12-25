@@ -90,9 +90,9 @@ class PartySaleController extends Controller
             'amount_received' => 'nullable|numeric',
             'balance' => 'nullable|numeric',
             'remarks' => 'nullable|string',
+            'modified' => 'nullable|boolean',
         ]);
-
-        $validated['modified'] = true;
+        $validated['modified'] = $request->has('modified');
         $partySale->update($validated);
 
         return redirect()->route('party-sales.index')->with('success', 'Record updated successfully.');
@@ -207,17 +207,30 @@ class PartySaleController extends Controller
 
     public function bulkUpdate(Request $request)
     {
-        // dd($request->all());
         foreach ($request->sales as $id => $data) {
-            PartySale::where('id', $id)->update([
-                'aging' => $data['aging'] ?? null,
-                'cd' => $data['cd'] ?? null,
-                'product_return' => $data['product_return'] ?? null,
-                'online_payment' => $data['online_payment'] ?? null,
-                'amount_received' => $data['amount_received'] ?? null,
-            ]);
+            $sale = PartySale::find($id);
+            if (!$sale) {
+                continue;
+            }
+            $customerNameChanged = false;
+            if (isset($data['customer_name']) && $data['customer_name'] !== $sale->customer_name) {
+                $customerNameChanged = true;
+            }
+            $updateData = [
+                'aging'           => $data['aging'] ?? $sale->aging,
+                'cd'              => $data['cd'] ?? $sale->cd,
+                'product_return'  => $data['product_return'] ?? $sale->product_return,
+                'online_payment'  => $data['online_payment'] ?? $sale->online_payment,
+                'amount_received' => $data['amount_received'] ?? $sale->amount_received,
+            ];
+            if (isset($data['customer_name'])) {
+                $updateData['customer_name'] = $data['customer_name'];
+            }
+            if ($customerNameChanged) {
+                $updateData['modified'] = true;
+            }
+            $sale->update($updateData);
         }
-
         return redirect()->back()->with('success', 'Sales updated successfully');
     }
 

@@ -55,6 +55,11 @@
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <input type="text" id="customerSearch" class="form-control" placeholder="Search by Customer Name...">
+            </div>
+        </div>
 
         @php
             $sort = request('sort') === 'asc' ? 'desc' : 'asc';
@@ -67,7 +72,7 @@
                 <thead>
                     <tr>
                         <th>S.No</th>
-                        <th>
+                        <th style="min-width: 280px;">
                             <a href="{{ route('party-sales.index', array_merge(request()->all(), ['sort' => $sort])) }}">
                                 Customer Name
                                 @if(request('sort') === 'asc') &#9650; @elseif(request('sort') === 'desc') &#9660; @endif
@@ -112,7 +117,12 @@
                         @endphp
                         <tr>
                             <td>{{ $serial++ }}</td>
-                            <td>{{ $sale->customer_name }}
+                            <td class="customer-name">
+                                <input type="text"
+                                    class="form-control w-100"
+                                    name="sales[{{ $sale->id }}][customer_name]"
+                                    value="{{ $sale->customer_name }}">
+                                
                                 @if($sale->modified)
                                     <span class="badge bg-success ms-2">Modified</span>
                                 @endif
@@ -328,5 +338,28 @@
             });
         });
 
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('customerSearch');
+            const rows = document.querySelectorAll('tbody tr');
+            searchInput.addEventListener('keyup', function () {
+                const searchValue = this.value.toLowerCase();
+                rows.forEach(row => {
+                    const customerCell = row.querySelector('.customer-name');
+
+                    if (!customerCell) return;
+                    const input = customerCell.querySelector('input[name*="[customer_name]"]');
+                    if (!input) return;
+
+                    const customerName = input.value.toLowerCase();
+                    
+                    if (customerName.includes(searchValue)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
     </script>
 @endpush
