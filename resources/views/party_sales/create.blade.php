@@ -43,6 +43,7 @@
         <div class="mb-3"><label>Online Payment</label><input type="text" name="online_payment" class="form-control" value="{{ $partySale->online_payment ?? old('online_payment') }}"></div>
         <div class="mb-3"><label>Amount Received</label><input type="number" step="0.01" name="amount_received" class="form-control" value="{{ $partySale->amount_received ?? old('amount_received') }}"></div>
         <div class="mb-3"><label>Balance</label><input type="number" step="0.01" name="balance" class="form-control" value="{{ $partySale->balance ?? old('balance') }}"></div>
+        <div class="mb-3"><label>Remarks</label><input type="text" step="0.01" name="remarks" class="form-control" value="{{ $partySale->remarks ?? old('remarks') }}"></div>
 
         <button class="btn btn-primary" type="submit">{{ isset($partySale) ? 'Update' : 'Save' }}</button>
     </form>

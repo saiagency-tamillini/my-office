@@ -26,6 +26,7 @@ return new class extends Migration
             $table->decimal('amount_received', 12, 2)->nullable();
             $table->decimal('balance', 12, 2)->nullable();
             $table->string('remarks')->nullable();
+            $table->boolean('modified')->default(false);
             $table->timestamps();
 
 

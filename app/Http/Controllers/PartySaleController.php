@@ -61,6 +61,7 @@ class PartySaleController extends Controller
             'online_payment' => 'nullable|string',
             'amount_received' => 'nullable|numeric',
             'balance' => 'nullable|numeric',
+            'remarks' => 'nullable|string',
         ]);
 
         PartySale::create($request->all());
@@ -76,7 +77,7 @@ class PartySaleController extends Controller
 
     public function update(Request $request, PartySale $partySale)
     {
-        $request->validate([
+        $validated = $request->validate([
             'beat_id' => 'required|exists:beats,id',
             'customer_name' => 'required|string|max:255',
             'bill_no' => 'nullable|string|max:100',
@@ -88,9 +89,11 @@ class PartySaleController extends Controller
             'online_payment' => 'nullable|string',
             'amount_received' => 'nullable|numeric',
             'balance' => 'nullable|numeric',
+            'remarks' => 'nullable|string',
         ]);
 
-        $partySale->update($request->all());
+        $validated['modified'] = true;
+        $partySale->update($validated);
 
         return redirect()->route('party-sales.index')->with('success', 'Record updated successfully.');
     }
@@ -112,9 +115,22 @@ class PartySaleController extends Controller
         }
     }
 
-    public function download()
+    public function download(Request $request)
     {
-        $sales = PartySale::with('beat')->orderBy('beat_id')->orderBy('bill_date')->get();
+
+        $query = PartySale::with('beat');
+        $billDate = $request->filled('bill_date') ? $request->bill_date : now()->format('Y-m-d');
+        $query->whereDate('bill_date', $billDate);
+        if ($request->filled('salesmen')) {
+            $query->whereIn('beat_id', function($q) use ($request) {
+                $q->select('id')
+                ->from('beats')
+                ->whereIn('salesman', $request->salesmen);
+            });
+        }
+
+        $sales = $query->orderBy('beat_id')->orderBy('bill_date')->get();
+
 
         // Group by salesman
         $grouped = $sales->groupBy(function ($item) {
@@ -142,7 +158,6 @@ class PartySaleController extends Controller
         $sheet->fromArray($headers, null, 'A1');
 
         $rowNo = 2;
-// dd($grouped);
         foreach ($grouped as $salesman => $salesGroup) {
             
             // Salesman header row

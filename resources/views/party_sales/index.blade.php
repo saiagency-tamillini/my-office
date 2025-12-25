@@ -1,5 +1,23 @@
 @extends('layouts.master')
+@include('modals.denomination_modal')
+<style>
+.icon-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+}
 
+.icon-btn .btn-text {
+    display: none; /* hide text by default */
+    margin-left: 5px;
+}
+
+.icon-btn:hover .btn-text {
+    display: inline; /* show text on hover */
+}
+    
+</style>
 @section('content')
     <div class="container">
         <h2>Party Sales List</h2>
@@ -30,7 +48,7 @@
         </form>
 
         <a href="{{ route('party-sales.create') }}" class="btn btn-primary mb-3">Add New</a>
-        <a href="{{ route('party-sales.download') }}" class="btn btn-success mb-3">Download Excel</a>
+        <a href="{{ route('party-sales.download', request()->all()) }}" class="btn btn-success mb-3">Download Excel</a>
 
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
@@ -68,6 +86,11 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @php
+                        $totalProductReturn = 0;
+                        $totalOnlinePayment = 0;
+                        $totalAmountReceived = 0;
+                    @endphp
                     @forelse($sales as $sale)
                         @if($currentSalesman !== $sale->beat->salesman)
                             <tr style="font-weight:bold; text-align:center;">
@@ -81,10 +104,17 @@
                         @php
                             $billDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime($sale->bill_date)));
                             $aging = $billDate->diffInDays(\Carbon\Carbon::today(), false);
+                            $totalProductReturn += $sale->product_return ?? 0;
+                            $totalOnlinePayment += $sale->online_payment ?? 0;
+                            $totalAmountReceived += $sale->amount_received ?? 0;
                         @endphp
                         <tr>
                             <td>{{ $serial++ }}</td>
-                            <td>{{ $sale->customer_name }}</td>
+                            <td>{{ $sale->customer_name }}
+                                @if($sale->modified)
+                                    <span class="badge bg-success ms-2">Modified</span>
+                                @endif
+                            </td>
                             <td>{{ $sale->bill_no }}</td>
                             <td>{{ $sale->bill_date ? \Carbon\Carbon::parse($sale->bill_date)->format('d-m-Y') : '' }}</td>
                             <td>{{ $aging }}</td>
@@ -126,12 +156,16 @@
                             <td>{{ $sale->beat->name }}</td>
                             <td>{{ $sale->remarks }}</td>
                             <td>
-                                <a href="{{ route('party-sales.edit', $sale->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                 <button type="button" class="btn btn-sm btn-danger"
-                                        onclick="deleteSale({{ $sale->id }})">
-                                    Delete
+                                <a href="{{ route('party-sales.edit', $sale->id) }}" class="btn btn-sm btn-warning icon-btn" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                    <span class="btn-text">Edit</span>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-danger icon-btn" onclick="deleteSale({{ $sale->id }})" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                    <span class="btn-text">Delete</span>
                                 </button>
                             </td>
+
                         </tr>
                     @empty
                         <tr>
@@ -141,6 +175,17 @@
                         </tr>
                     @endforelse
                 </tbody>
+                @if($sales->isNotEmpty())
+                    <tfoot>
+                        <tr style="font-weight:bold; background-color:#f0f0f0;">
+                            <td colspan="7" class="text-end">Total:</td>
+                            <td id="totalProductReturn">{{ $totalProductReturn }}</td>
+                            <td id="totalOnlinePayment">{{ $totalOnlinePayment }}</td>
+                            <td id="totalAmountReceived">{{ $totalAmountReceived }}</td>
+                            <td colspan="4"></td>
+                        </tr>
+                    </tfoot>
+                @endif
             </table>
             @if($sales->isNotEmpty())
                 <div class="text-end mt-3">
@@ -192,7 +237,7 @@
                 console.error(error);
             });
         }
-         function validateMax(input, maxValue) {
+        function validateMax(input, maxValue) {
             let value = parseFloat(input.value) || 0;
             if (value > maxValue) {
                 input.value = maxValue; 
@@ -213,5 +258,71 @@
 
             document.getElementById(`balance-${saleId}`).value = balance;
         }
+
+        function updateBalance(saleId, amount) {
+            const cd = parseFloat(document.querySelector(`input[name='sales[${saleId}][cd]']`).value) || 0;
+            const productReturnInput = document.querySelector(`input[name='sales[${saleId}][product_return]']`);
+            const onlinePaymentInput = document.querySelector(`input[name='sales[${saleId}][online_payment]']`);
+            const amountReceivedInput = document.querySelector(`input[name='sales[${saleId}][amount_received]']`);
+
+            const productReturn = parseFloat(productReturnInput.value) || 0;
+            const onlinePayment = parseFloat(onlinePaymentInput.value) || 0;
+            const amountReceived = parseFloat(amountReceivedInput.value) || 0;
+
+            let balance = amount - (cd + productReturn + onlinePayment + amountReceived);
+            const balanceInput = document.getElementById(`balance-${saleId}`);
+            if (balance < 0) {
+                balanceInput.style.border = "2px solid green";
+            } else {
+                balanceInput.style.border = "";
+            }
+            balanceInput.value = balance;
+            updateTotals();
+        }
+
+        function updateTotals() {
+            let totalProductReturn = 0;
+            let totalOnlinePayment = 0;
+            let totalAmountReceived = 0;
+
+            document.querySelectorAll("input[name$='[product_return]']").forEach(input => {
+                totalProductReturn += parseFloat(input.value) || 0;
+            });
+            document.querySelectorAll("input[name$='[online_payment]']").forEach(input => {
+                totalOnlinePayment += parseFloat(input.value) || 0;
+            });
+            document.querySelectorAll("input[name$='[amount_received]']").forEach(input => {
+                totalAmountReceived += parseFloat(input.value) || 0;
+            });
+
+            document.getElementById('totalProductReturn').textContent = totalProductReturn;
+            document.getElementById('totalOnlinePayment').textContent = totalOnlinePayment;
+            document.getElementById('totalAmountReceived').textContent = totalAmountReceived;
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form[action="{{ route('bulk-update') }}"]');
+            const PrevTotalAmount = {{ $totalAmountReceived}};
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); 
+                var denominationModal = new bootstrap.Modal(document.getElementById('denominationModal'));
+                denominationModal.show();
+            });
+
+            
+            document.getElementById('submitWithDenomination').addEventListener('click', function() {
+                const totalAmountReceived = parseInt(document.getElementById('totalAmountReceived').textContent) || 0;
+                const totalDen = parseInt(document.getElementById('denominationTotal').value) || 0;
+                if ((PrevTotalAmount + totalDen) !== totalAmountReceived) {
+                    document.getElementById('denominationError').classList.remove('d-none');
+                } else {
+                    document.getElementById('denominationError').classList.add('d-none');
+                    form.submit();
+                }
+            });
+        });
+
     </script>
 @endpush

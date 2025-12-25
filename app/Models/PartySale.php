@@ -22,7 +22,8 @@ class PartySale extends Model
         'online_payment',
         'amount_received',
         'balance',
-        'remarks'
+        'remarks',
+        'modified'
     ];
     protected $casts = [
         'bill_date' => 'date',

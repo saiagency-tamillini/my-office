@@ -81,6 +81,10 @@
             <label for="balance" class="form-label">Balance</label>
             <input type="text" name="balance" id="balance" class="form-control" value="{{ $partySale->balance }}">
         </div>
+        <div class="mb-3">
+            <label for="remarks" class="form-label">Remarks</label>
+            <input type="text" name="remarks" id="remarks" class="form-control" value="{{ $partySale->remarks }}">
+        </div>
 
         <button type="submit" class="btn btn-primary">Update</button>
     </form>
