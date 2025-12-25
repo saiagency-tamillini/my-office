@@ -12,7 +12,7 @@ class PartySale extends Model
     protected $fillable = [
         'beat_id',
         's_no',
-        'customer_name',
+        'customer_id',
         'bill_no',
         'bill_date',
         'aging',
@@ -35,5 +35,9 @@ class PartySale extends Model
     public function beat()
     {
         return $this->belongsTo(Beat::class);
+    }
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 }

@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('party_sales', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('beat_id');
+            $table->unsignedBigInteger('beat_id')->nullable();
             $table->integer('s_no')->nullable();
-            $table->string('customer_name');
+            $table->unsignedBigInteger('customer_id')->nullable();
             $table->string('bill_no')->nullable()->unique();
             $table->date('bill_date')->nullable();
             $table->string('aging')->nullable();
@@ -29,8 +29,8 @@ return new class extends Migration
             $table->boolean('modified')->default(false);
             $table->timestamps();
 
-
-            $table->foreign('beat_id')->references('id')->on('beats')->onDelete('cascade');
+            $table->foreign('beat_id')->references('id')->on('beats')->onDelete('set null');
+            // $table->foreign('customer_id')->references('id')->on('customers')->onDelete('set null');
         });
     }
 

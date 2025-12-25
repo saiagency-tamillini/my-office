@@ -32,10 +32,15 @@
             </select>
         </div>
 
-        <div class="mb-3">
-            <label for="customer_name" class="form-label">Customer Name</label>
-            <input type="text" name="customer_name" id="customer_name" class="form-control" value="{{ $partySale->customer_name }}" required>
-        </div>
+        <select name="customer_id" class="form-control">
+            {{-- <option value="">Select Customer</option> --}}
+            @foreach($customers as $customer)
+                <option value="{{ $customer->id }}"
+                    {{ old('customer_id', $partySale->customer_id ?? '') == $customer->id ? 'selected' : '' }}>
+                    {{ $customer->name }} ({{ $customer->beat->name ?? '' }})
+                </option>
+            @endforeach
+        </select>
 
         <div class="mb-3">
             <label for="bill_no" class="form-label">Bill No</label>

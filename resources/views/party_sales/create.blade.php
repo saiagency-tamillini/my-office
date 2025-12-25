@@ -23,6 +23,13 @@
 
         <div class="mb-3">
             <label>Customer Name</label>
+            <select name="beat_id" class="form-control">
+                @foreach($customers as $customer)
+                    <option value="{{ $customer->id }}" {{ (isset($partySale) && $partySale->customer_id==$customer->id) ? 'selected' : '' }}>
+                        {{ $customer->name}}
+                    </option>
+                @endforeach
+            </select>
             <input type="text" name="customer_name" class="form-control" value="{{ $partySale->customer_name ?? old('customer_name') }}">
         </div>
 

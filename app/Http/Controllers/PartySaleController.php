@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PartySale;
 use App\Models\Beat;
+use App\Models\Customer;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -23,10 +24,11 @@ class PartySaleController extends Controller
             : Carbon::today()->format('Y-m-d');
         $query = PartySale::with('beat')
             ->join('beats', 'party_sales.beat_id', '=', 'beats.id')
+             ->leftJoin('customers', 'party_sales.customer_id', '=', 'customers.id')
             ->whereDate('party_sales.bill_date', $date)
             ->orderBy('beats.salesman')
             ->orderBy('party_sales.bill_date')
-            ->select('party_sales.*'); 
+            ->select('party_sales.*','customers.name as customer_name'); 
 
         if ($request->filled('salesmen')) {
             $query->whereIn('beats.salesman', $request->salesmen);
@@ -37,21 +39,22 @@ class PartySaleController extends Controller
         }
 
         $sales = $query->get();
-
-        return view('party_sales.index', compact('sales', 'salesmen'));
+        $customers = Customer::with('beat')->get();
+        return view('party_sales.index', compact('sales', 'salesmen', 'customers'));
     }
 
     public function create()
     {
         $beats = Beat::all();
-        return view('party_sales.create', compact('beats'));
+        $customers = Customer::with('beat')->get();
+        return view('party_sales.create', compact('beats','customers'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'beat_id' => 'required|exists:beats,id',
-            'customer_name' => 'required|string|max:255',
+            'customer_id' => 'required|exists:customers,id',
             'bill_no' => 'nullable|string|max:100',
             'bill_date' => 'nullable|date',
             'aging' => 'nullable|string',
@@ -72,14 +75,15 @@ class PartySaleController extends Controller
     public function edit(PartySale $partySale)
     {
         $beats = Beat::all();
-        return view('party_sales.edit', compact('partySale', 'beats'));
+        $customers = Customer::with('beat')->get(); 
+        return view('party_sales.edit', compact('partySale', 'beats', 'customers'));
     }
 
     public function update(Request $request, PartySale $partySale)
     {
         $validated = $request->validate([
             'beat_id' => 'required|exists:beats,id',
-            'customer_name' => 'required|string|max:255',
+            'customer_id' => 'required|exists:customers,id',
             'bill_no' => 'nullable|string|max:100',
             'bill_date' => 'nullable|date',
             'aging' => 'nullable|string',
@@ -102,7 +106,6 @@ class PartySaleController extends Controller
     {
         try {
             $sale = PartySale::findOrFail($id);
-            // dd($sale);
             if(!empty($sale)){
                 $sale->delete();
             }
@@ -117,8 +120,12 @@ class PartySaleController extends Controller
 
     public function download(Request $request)
     {
-
-        $query = PartySale::with('beat');
+        $query = PartySale::with('beat')
+            ->leftJoin('customers', 'party_sales.customer_id', '=', 'customers.id')
+            ->select('party_sales.*', 'customers.name as customer_name');
+        if ($request->filled('sort') && in_array($request->sort, ['asc', 'desc'])) {
+            $query->orderBy('customers.name', $request->sort);
+        }
         $billDate = $request->filled('bill_date') ? $request->bill_date : now()->format('Y-m-d');
         $query->whereDate('bill_date', $billDate);
         if ($request->filled('salesmen')) {
@@ -182,7 +189,7 @@ class PartySaleController extends Controller
                     : 0;
                 $sheet->fromArray([
                     $serial++,
-                    $sale->customer_name,
+                    $sale->customer->name,
                     $sale->bill_no,
                     $sale->bill_date ? \Carbon\Carbon::parse($sale->bill_date)->format('d-m-Y') : '',
                     $aging,
@@ -213,10 +220,7 @@ class PartySaleController extends Controller
             if (!$sale) {
                 continue;
             }
-            $customerNameChanged = false;
-            if (isset($data['customer_name']) && $data['customer_name'] !== $sale->customer_name) {
-                $customerNameChanged = true;
-            }
+    
             $updateData = [
                 'aging'           => $data['aging'] ?? $sale->aging,
                 'cd'              => $data['cd'] ?? $sale->cd,
@@ -225,10 +229,8 @@ class PartySaleController extends Controller
                 'amount_received' => $data['amount_received'] ?? $sale->amount_received,
                 'balance' => $data['balance'] ?? $sale->balance,
             ];
-            if (isset($data['customer_name'])) {
-                $updateData['customer_name'] = $data['customer_name'];
-            }
-            if ($customerNameChanged) {
+            if (isset($data['customer_id']) && $data['customer_id'] != $sale->customer_id) {
+                $updateData['customer_id'] = $data['customer_id'];
                 $updateData['modified'] = true;
             }
             $sale->update($updateData);

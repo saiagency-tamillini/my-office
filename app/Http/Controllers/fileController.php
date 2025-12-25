@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
 use App\Models\Beat;
 use App\Models\PartySale;
+use App\Models\Customer;
 use Carbon\Carbon;
 
 
@@ -184,10 +185,17 @@ class fileController extends Controller
                 if (!empty($row['Bill Date'])) {
                     $billDate = \Carbon\Carbon::createFromFormat('d/m/Y', $row['Bill Date'])->format('Y-m-d');
                 }
+                $customerName = trim($row['Customer Name']);
+                $customer = null;
+                if ($customerName) {
+                    $customer = Customer::firstOrCreate(
+                        ['name' => $customerName, 'beat_id' => $currentBeatId]
+                    );
+                }
                 try {
                     PartySale::create([
                         'beat_id'        => $currentBeatId,
-                        'customer_name'  => $row['Customer Name'],
+                        'customer_id'   => $customer ? $customer->id : null,
                         'bill_no'        => $row['Bill No'],
                         'bill_date'      => $billDate,
                         'amount'         => $row['Amount'],
@@ -203,9 +211,5 @@ class fileController extends Controller
             }
         });
     }
-
-
-
-
 
 }
