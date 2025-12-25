@@ -5,6 +5,13 @@
         <h2>Party Sales List</h2>
 
         <form method="GET" action="{{ route('party-sales.index') }}" class="mb-3">
+            <div class="mb-2">
+                <label class="form-label">Bill Date:</label>
+                <input type="date"
+                    name="bill_date"
+                    class="form-control"
+                    value="{{ request('bill_date', \Carbon\Carbon::today()->format('Y-m-d')) }}">
+            </div>
             <div class="mb-2">Filter by Salesman:</div>
             <div class="d-flex flex-wrap mb-2">
                 @foreach($salesmen as $salesman)
@@ -61,7 +68,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($sales as $sale)
+                    @forelse($sales as $sale)
                         @if($currentSalesman !== $sale->beat->salesman)
                             <tr style="font-weight:bold; text-align:center;">
                                 <td colspan="13" style=" background-color:#c0d3ef;">{{ $sale->beat->salesman }}</td>
@@ -126,14 +133,22 @@
                                 </button>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="14" class="text-center text-muted">
+                                No data available
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
-            <div class="text-end mt-3">
-                <button type="submit" class="btn btn-success">
-                    Save Changes
-                </button>
-            </div>
+            @if($sales->isNotEmpty())
+                <div class="text-end mt-3">
+                    <button type="submit" class="btn btn-success">
+                        Save Changes
+                    </button>
+                </div>
+            @endif
         </form>
     </div>
 @endsection

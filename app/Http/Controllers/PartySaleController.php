@@ -18,15 +18,19 @@ class PartySaleController extends Controller
     {
         // Get all salesmen for the filter checkboxes
         $salesmen = Beat::select('salesman')->distinct()->pluck('salesman');
-            $query = PartySale::with('beat')
-                ->join('beats', 'party_sales.beat_id', '=', 'beats.id')
-                ->orderBy('beats.salesman')
-                ->orderBy('party_sales.bill_date')
-                ->select('party_sales.*'); 
+        $date = $request->filled('bill_date')
+            ? Carbon::parse($request->bill_date)->format('Y-m-d')
+            : Carbon::today()->format('Y-m-d');
+        $query = PartySale::with('beat')
+            ->join('beats', 'party_sales.beat_id', '=', 'beats.id')
+            ->whereDate('party_sales.bill_date', $date)
+            ->orderBy('beats.salesman')
+            ->orderBy('party_sales.bill_date')
+            ->select('party_sales.*'); 
 
-            if ($request->filled('salesmen')) {
-                $query->whereIn('beats.salesman', $request->salesmen);
-            }
+        if ($request->filled('salesmen')) {
+            $query->whereIn('beats.salesman', $request->salesmen);
+        }
 
         if ($request->has('sort') && in_array($request->sort, ['asc', 'desc'])) {
             $query->orderBy('customer_name', $request->sort);

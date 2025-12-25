@@ -8,6 +8,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
 use App\Models\Beat;
 use App\Models\PartySale;
 use Carbon\Carbon;
@@ -21,35 +22,43 @@ class fileController extends Controller
 
     public function uploadExcel(Request $request)
     {
-        $request->validate([
-            'excel_file' => 'required|file|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/octet-stream',
-        ]);
+        try {
+            $request->validate([
+                'excel_file' => 'required|file|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/octet-stream',
+            ]);
 
-        $spreadsheet = IOFactory::load($request->file('excel_file')->getPathname());
+            $spreadsheet = IOFactory::load($request->file('excel_file')->getPathname());
 
-        $sheet = $spreadsheet->getSheetByName('Party Wise Sales Report');
-        if (!$sheet) {
-            return back()->with('error', 'Sheet not found');
+            $sheet = $spreadsheet->getSheetByName('Party Wise Sales Report');
+            if (!$sheet) {
+                return back()->with('error', 'Sheet not found');
+            }
+
+            $rows = $sheet->toArray();
+
+            // ✅ Validate structure & get header info
+            [$headerRowIndex, $indexes] = $this->validateExcelSheet($rows);
+
+            // ✅ Prepare formatted data
+            $data = $this->prepareExcelData($rows, $headerRowIndex, $indexes);
+
+            if (empty($data)) {
+                return back()->with('error', 'No valid data found');
+            }
+
+            $this->storeExcelData($data);
+
+            return redirect()->route('party-sales.index')
+                ->with('success', 'Excel data imported successfully');
+            // ✅ Download Excel
+            // return $this->downloadExcel($data, 'Party_Wise_Report.xlsx');
+        } catch (\Exception $e) {
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', $e->getMessage());
         }
-
-        $rows = $sheet->toArray();
-
-        // ✅ Validate structure & get header info
-        [$headerRowIndex, $indexes] = $this->validateExcelSheet($rows);
-
-        // ✅ Prepare formatted data
-        $data = $this->prepareExcelData($rows, $headerRowIndex, $indexes);
-
-        if (empty($data)) {
-            return back()->with('error', 'No valid data found');
-        }
-
-        $this->storeExcelData($data);
-
-        return redirect()->route('party-sales.index')
-            ->with('success', 'Excel data imported successfully');
-        // ✅ Download Excel
-        // return $this->downloadExcel($data, 'Party_Wise_Report.xlsx');
     }
 
     private function validateExcelSheet(array $rows): array
@@ -158,154 +167,39 @@ class fileController extends Controller
         return $finalData;
     }
 
-    // private function downloadExcel(array $data, string $fileName)
-    // {
-    //     $spreadsheet = new Spreadsheet();
-    //     $sheet = $spreadsheet->getActiveSheet();
-
-    //     // Column headers (add S.No as first column)
-    //     $headers = [
-    //         'S.No',
-    //         'Customer Name',
-    //         'Bill No',
-    //         'Bill Date',
-    //         'Aging',
-    //         'Amount',
-    //         'CD',
-    //         'Product Return',
-    //         'Online Payment',
-    //         'Amount Received',
-    //         'Balance',
-    //     ];
-
-    //     $sheet->fromArray($headers, null, 'A1');
-    //     // $sheet->getStyle('A1:K1')->getFont()->setBold(true)->setWrapText(true)->getColumnDimension('A')->setWidth(15);
-    //     $sheet->getStyle('A1:K1')->getFont()->setBold(true);
-    //     $sheet->getStyle('A1:K1')->getAlignment()->setWrapText(true);
-
-    //     $standardWidth = 8;
-    //     foreach (['C', 'D', 'F', 'G', 'H', 'I', 'J', 'K'] as $col) {
-    //         $sheet->getColumnDimension($col)->setWidth($standardWidth);
-    //     }
-    //     $rowNo = 2;
-    //     $serial = 1;
-
-    //     $beatStartRow = null;
-    //     $currentBeat = null;
-    //     foreach ($data as $index => $row) {
-    //         if ($row['type'] === 'beat') {
-    //             if ($beatStartRow !== null && $rowNo - $beatStartRow > 1) {
-    //                 // Handle merges here if needed
-    //             }
-
-    //             // Insert beat header row
-    //             $sheet->mergeCells("A{$rowNo}:K{$rowNo}");
-    //             $sheet->setCellValue("A{$rowNo}", $row['beat']);
-
-    //             $sheet->getStyle("A{$rowNo}:K{$rowNo}")->applyFromArray([
-    //                 'font' => ['bold' => true, 'size' => 12],
-    //                 'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-    //                 'fill' => [
-    //                     'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-    //                     'startColor' => ['rgb' => 'BDD7EE'],
-    //                 ],
-    //             ]);
-
-    //             $currentBeat = $row['beat'];
-    //             $beatStartRow = $rowNo + 1;
-    //             $rowNo++;
-    //             $serial = 1;
-    //             continue;
-    //         }
-
-    //         // Insert serial number manually here
-    //         $row['S.No'] = $serial++;
-
-    //         $sheet->fromArray([
-    //             $row['S.No'],
-    //             $row['Customer Name'],
-    //             $row['Bill No'],
-    //             $row['Bill Date'],
-    //             $row['Aging'],
-    //             $row['Amount'],
-    //             $row['CD'],
-    //             $row['Product Return'],
-    //             $row['Online Payment'],
-    //             $row['Amount Received'],
-    //             $row['Balance'],
-    //         ], null, "A{$rowNo}");
-
-    //         // Wrap text for Customer Name column (B)
-    //         $sheet->getStyle("B{$rowNo}")->getAlignment()->setWrapText(true);
-
-    //         $rowNo++;
-    //     }
-
-    //     // Set columns width
-    //     // Narrow columns: S.No (A), Aging (E)
-    //     $sheet->getColumnDimension('A')->setWidth(3);
-    //     $sheet->getColumnDimension('E')->setWidth(3);
-
-    //     // Customer Name (B) - wider and wrap text
-    //     $sheet->getColumnDimension('B')->setWidth(8);
-
-    //     // Other columns standard size, adjust widths so total fits A4
-    //     // $standardWidth = 15; // you can adjust this for fitting
-    //     foreach (['C', 'D', 'F', 'G', 'H', 'I', 'J', 'K'] as $col) {
-    //         $sheet->getColumnDimension($col)->setWidth($standardWidth);
-    //     }
-
-    //     // Setup A4 page size and margins for printing
-    //     $pageSetup = $sheet->getPageSetup();
-    //     $pageSetup->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4);
-    //     $pageSetup->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
-
-    //     // Margins (inches)
-    //     $sheet->getPageMargins()->setTop(0);
-    //     $sheet->getPageMargins()->setBottom(0);
-    //     $sheet->getPageMargins()->setLeft(0);
-    //     $sheet->getPageMargins()->setRight(0);
-
-    //     // Optionally freeze header row
-    //     $sheet->freezePane('A2');
-
-    //     // Optional: enable autofilter on header row
-    //     // $sheet->setAutoFilter("A1:K1");
-
-    //     $writer = new Xlsx($spreadsheet);
-
-    //     return response()->streamDownload(function () use ($writer) {
-    //         $writer->save('php://output');
-    //     }, $fileName);
-    // }
-
     private function storeExcelData(array $data): void
     {
-        // dd($data);
         DB::transaction(function () use ($data) {
             $currentBeatId = null;
-
+            
             foreach ($data as $row) {
-
+                
                 if ($row['type'] === 'beat') {
                     $currentBeatId = Beat::where('name', $row['beat'])->value('id');
                     continue;
                 }
 
                 if (!$currentBeatId) continue;
-
                 $billDate = null;
                 if (!empty($row['Bill Date'])) {
                     $billDate = \Carbon\Carbon::createFromFormat('d/m/Y', $row['Bill Date'])->format('Y-m-d');
                 }
-
-                PartySale::create([
-                    'beat_id'        => $currentBeatId,
-                    'customer_name'  => $row['Customer Name'],
-                    'bill_no'        => $row['Bill No'],
-                    'bill_date'      => $billDate,
-                    'amount'         => $row['Amount'],
-                ]);
+                try {
+                    PartySale::create([
+                        'beat_id'        => $currentBeatId,
+                        'customer_name'  => $row['Customer Name'],
+                        'bill_no'        => $row['Bill No'],
+                        'bill_date'      => $billDate,
+                        'amount'         => $row['Amount'],
+                    ]);
+                } catch (QueryException $e) {
+                    if ($e->getCode() == 23000) {
+                        throw new \Exception(
+                            'Duplicate Bill Number found: ' . ($row['Bill No'] ?? 'Unknown')
+                        );
+                    }
+                    throw $e;
+                }
             }
         });
     }
