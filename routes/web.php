@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\fileController;
 use App\Http\Controllers\BeatController;
 use App\Http\Controllers\PartySaleController;
+use App\Http\Controllers\CustomerController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -18,3 +19,5 @@ Route::post('bulk-update', [PartySaleController::class, 'bulkUpdate'])
 Route::get('party-sales-download', [PartySaleController::class, 'download'])
     ->name('party-sales.download');
 Route::resource('party-sales', PartySaleController::class);
+
+Route::resource('customers', CustomerController::class);

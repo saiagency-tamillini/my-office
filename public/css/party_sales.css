@@ -1,0 +1,156 @@
+.icon-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+}
+.icon-btn .btn-text {
+    display: none; 
+    margin-left: 5px;
+}
+
+.icon-btn:hover .btn-text {
+    display: inline; 
+}
+.print-beat-heading {
+    display: none;
+}
+.salesman-row{
+    font-weight:bold; 
+    text-align:center;
+}
+.salesman-row td {
+    background-color:#c0d3ef;
+}
+@media print {
+
+    /* A4 portrait page setup */
+    @page {
+        size: A4 portrait;
+        margin: 15mm;
+    }
+
+    body {
+        font-size: 12px;
+        color: #000;
+    }
+
+    /* Hide everything except print area */
+    body * {
+        visibility: hidden;
+    }
+
+    #printArea,
+    #printArea * {
+        visibility: visible;
+    }
+
+    #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    /* Hide buttons, inputs, selects UI */
+    button,
+    .btn,
+    .icon-btn,
+    .form-control,
+    input,
+    select {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        appearance: none;
+        pointer-events: none;
+    }
+
+    /* Table styling */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid #000 !important;
+        padding: 5px;
+        font-size: 11px;
+        vertical-align: middle;
+    }
+
+    th {
+        background-color: #f2f2f2 !important;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    /* Hide search bar */
+    #customerSearch {
+        display: none !important;
+    }
+
+    /* Salesman header row */
+    tr[style*="font-weight:bold"] td {
+        background-color: #ddd !important;
+        text-align: center;
+        font-size: 12px;
+    }
+
+    /* Prevent row breaking */
+    /* tr {
+        page-break-inside: avoid;
+    } */
+    
+    /* Aging column – narrow */
+    .aging-col {
+        width: 35px !important;
+        max-width: 35px !important;
+        min-width: 35px !important;
+        text-align: center;
+        white-space: normal !important;
+        word-break: break-word;
+    }
+    .date-col {
+        width: 85px !important;
+        min-width: 85px !important;
+        max-width: 85px !important;
+        white-space: nowrap !important;
+        text-align: center;
+    }
+    /* Header wrap */
+    th.aging-col {
+        font-size: 10px;
+        line-height: 1.1;
+        padding: 3px;
+    }
+
+    /* Data cell */
+    td.aging-col {
+        font-size: 11px;
+        padding: 4px;
+    }
+    .hide-print {
+        display: none !important;
+    }
+    .print-beat-heading {
+        display: block;
+        margin-bottom: 15px;
+    }
+    .salesman-cell {
+        display: table-cell !important;
+        text-align: center;
+        font-weight: bold;
+        background-color: #c0d3ef !important;
+
+        width: 100%;
+    }
+    .salesman-row td {
+        border: 1px solid #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    /* .salesman-row {
+        page-break-before: always;
+    } */
+
+}

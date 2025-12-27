@@ -19,6 +19,7 @@ class PartySaleController extends Controller
     {
         // Get all salesmen for the filter checkboxes
         $salesmen = Beat::select('salesman')->distinct()->pluck('salesman');
+        $beats = Beat::orderBy('name')->get();
         $date = $request->filled('bill_date')
             ? Carbon::parse($request->bill_date)->format('Y-m-d')
             : Carbon::today()->format('Y-m-d');
@@ -37,10 +38,16 @@ class PartySaleController extends Controller
         if ($request->has('sort') && in_array($request->sort, ['asc', 'desc'])) {
             $query->orderBy('customer_name', $request->sort);
         }
-
+        if ($request->filled('beat_id')) {
+            $query->where('party_sales.beat_id', $request->beat_id);
+        }
         $sales = $query->get();
         $customers = Customer::with('beat')->get();
-        return view('party_sales.index', compact('sales', 'salesmen', 'customers'));
+        $selectedBeat = null;
+        if ($request->filled('beat_id')) {
+            $selectedBeat = Beat::find($request->beat_id);
+        }
+        return view('party_sales.index', compact('sales', 'salesmen', 'customers','beats','selectedBeat'));
     }
 
     public function create()
@@ -67,7 +74,21 @@ class PartySaleController extends Controller
             'remarks' => 'nullable|string',
         ]);
 
-        PartySale::create($request->all());
+        
+        PartySale::create([
+            'beat_id' => $request->beat_id,
+            'customer_id' => $request->customer_id,
+            'bill_no' => $request->bill_no,
+            'bill_date' => $request->bill_date,
+            'aging' => $request->aging,
+            'amount' => $request->amount,
+            'cd' => $request->cd,
+            'product_return' => $request->product_return,
+            'online_payment' => $request->online_payment,
+            'amount_received' => $request->amount_received,
+            'balance' => $request->balance,
+            'remarks' => $request->remarks,
+        ]);
 
         return redirect()->route('party-sales.index')->with('success', 'Record added successfully.');
     }

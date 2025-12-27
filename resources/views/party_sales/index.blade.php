@@ -1,23 +1,8 @@
 @extends('layouts.master')
 @include('modals.denomination_modal')
-<style>
-.icon-btn {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    padding: 5px 10px;
-}
-
-.icon-btn .btn-text {
-    display: none; /* hide text by default */
-    margin-left: 5px;
-}
-
-.icon-btn:hover .btn-text {
-    display: inline; /* show text on hover */
-}
-    
-</style>
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/party_sales.css') }}">
+@endpush
 @section('content')
     <div class="container">
         <h2>Party Sales List</h2>
@@ -43,6 +28,18 @@
                     </div>
                 @endforeach
             </div>
+            <div class="mb-2">
+                <label class="form-label">Filter by Beat:</label>
+                <select name="beat_id" class="form-select">
+                    <option value="">-- All Beats --</option>
+                    @foreach($beats as $beat)
+                        <option value="{{ $beat->id }}"
+                            {{ request('beat_id') == $beat->id ? 'selected' : '' }}>
+                            {{ $beat->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
             <button type="submit" class="btn btn-primary me-2">Filter</button>
             <a href="{{ route('party-sales.index') }}" class="btn btn-secondary">Reset</a>
         </form>
@@ -50,6 +47,7 @@
         <a href="{{ route('party-sales.create') }}" class="btn btn-primary mb-3">Add New</a>
         @if($sales->isNotEmpty())
             <a href="{{ route('party-sales.download', request()->all()) }}" class="btn btn-success mb-3">Download Excel</a>
+            <button type="button" class="btn btn-info mb-3" onclick="printPage()">Print</button>
         @endif
 
         @if(session('success'))
@@ -68,141 +66,149 @@
         @endphp
         <form method="POST" action="{{ route('bulk-update') }}">
             @csrf
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>S.No</th>
-                        <th style="min-width: 280px;">
-                            <a href="{{ route('party-sales.index', array_merge(request()->all(), ['sort' => $sort])) }}">
-                                Customer Name
-                                @if(request('sort') === 'asc') &#9650; @elseif(request('sort') === 'desc') &#9660; @endif
-                            </a>
-                        </th>
-                        <th>Bill No</th>
-                        <th>Bill Date</th>
-                        <th>Aging(days)</th>
-                        <th>Amount</th>
-                        <th>CD</th>
-                        <th>Product Return</th>
-                        <th>Online Payment</th>
-                        <th>Amount Received</th>
-                        <th>Balance</th>
-                        <th>Beat</th>
-                        <th>Remarks</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @php
-                        $totalProductReturn = 0;
-                        $totalOnlinePayment = 0;
-                        $totalAmountReceived = 0;
-                    @endphp
-                    @forelse($sales as $sale)
-                        @if($currentSalesman !== $sale->beat->salesman)
-                            <tr style="font-weight:bold; text-align:center;">
-                                <td colspan="13" style=" background-color:#c0d3ef;">{{ $sale->beat->salesman }}</td>
-                            </tr>
-                            @php
-                                $currentSalesman = $sale->beat->salesman;
-                                $serial = 1;
-                            @endphp
-                        @endif
-                        @php
-                            $billDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime($sale->bill_date)));
-                            $aging = $billDate->diffInDays(\Carbon\Carbon::today(), false);
-                            $totalProductReturn += $sale->product_return ?? 0;
-                            $totalOnlinePayment += $sale->online_payment ?? 0;
-                            $totalAmountReceived += $sale->amount_received ?? 0;
-                        @endphp
-                        <tr>
-                            <td>{{ $serial++ }}</td>
-                            <td class="customer-name">
-                                <select name="sales[{{ $sale->id }}][customer_id]" class="form-control w-100">
-                                    {{-- <option value="">Select Customer</option> --}}
-                                    @foreach($customers as $customer)
-                                        <option value="{{ $customer->id }}" 
-                                            {{ $sale->customer_id == $customer->id ? 'selected' : '' }}>
-                                            {{ $customer->name }} ({{ $customer->beat->name ?? 'No Beat' }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @if($sale->modified)
-                                    <span class="badge bg-success ms-2">Modified</span>
-                                @endif
-                            </td>
-                            <td>{{ $sale->bill_no }}</td>
-                            <td>{{ $sale->bill_date ? \Carbon\Carbon::parse($sale->bill_date)->format('d-m-Y') : '' }}</td>
-                            <td>{{ $aging }}</td>
-                            <td>{{ $sale->amount }}</td>
-                            <td>
-                                <input type="number" class="form-control"
-                                    name="sales[{{ $sale->id }}][cd]"
-                                    value="{{ $sale->cd }}"
-                                    max="{{ $sale->amount }}"
-                                    oninput="validateMax(this, {{ $sale->amount }}); updateBalance({{ $sale->id }}, {{ $sale->amount }})">
-                            </td>
-                            <td>
-                                <input type="number" class="form-control"
-                                    name="sales[{{ $sale->id }}][product_return]"
-                                    value="{{ $sale->product_return }}"
-                                    max="{{ $sale->amount }}"
-                                    oninput="validateMax(this, {{ $sale->amount }}); updateBalance({{ $sale->id }}, {{ $sale->amount }})">
-                            </td>
-                            <td>
-                                <input type="number" class="form-control"
-                                    name="sales[{{ $sale->id }}][online_payment]"
-                                    value="{{ $sale->online_payment }}"
-                                    oninput="updateBalance({{ $sale->id }}, {{ $sale->amount }})">
-                            </td>
-                            <td>
-                                <input type="number" class="form-control"
-                                    name="sales[{{ $sale->id }}][amount_received]"
-                                    value="{{ $sale->amount_received }}"
-                                    oninput="updateBalance({{ $sale->id }}, {{ $sale->amount }})">
-                            </td>
-                            <td>
-                                <input type="number" class="form-control balance" 
-                                    style="width: 100px;" 
-                                    id="balance-{{ $sale->id }}" 
-                                    name="sales[{{ $sale->id }}][balance]"
-                                    data-amount="{{ $sale->amount }}" 
-                                    readonly>
-                            </td>
-                            <td>{{ $sale->beat->name }}</td>
-                            <td>{{ $sale->remarks }}</td>
-                            <td>
-                                <a href="{{ route('party-sales.edit', $sale->id) }}" class="btn btn-sm btn-warning icon-btn" title="Edit">
-                                    <i class="fas fa-edit"></i>
-                                    <span class="btn-text">Edit</span>
-                                </a>
-                                <button type="button" class="btn btn-sm btn-danger icon-btn" onclick="deleteSale({{ $sale->id }})" title="Delete">
-                                    <i class="fas fa-trash"></i>
-                                    <span class="btn-text">Delete</span>
-                                </button>
-                            </td>
-
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="14" class="text-center text-muted">
-                                No data available
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-                @if($sales->isNotEmpty())
-                    <tfoot>
-                        <tr style="font-weight:bold; background-color:#f0f0f0;">
-                            <td colspan="7" class="text-end">Total:</td>
-                            <td id="totalProductReturn">{{ $totalProductReturn }}</td>
-                            <td id="totalOnlinePayment">{{ $totalOnlinePayment }}</td>
-                            <td id="totalAmountReceived">{{ $totalAmountReceived }}</td>
-                            <td colspan="4"></td>
-                        </tr>
-                    </tfoot>
+            <div id="printArea">
+                @if($selectedBeat)
+                    <div class="text-center mb-3 print-beat-heading">
+                        <h4>{{ $selectedBeat->name }} ({{ request('bill_date', \Carbon\Carbon::today()->format('d-m-Y')) }})</h4>
+                        {{-- <p>Date: {{ request('bill_date', \Carbon\Carbon::today()->format('d-m-Y')) }}</p> --}}
+                    </div>
                 @endif
-            </table>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>S.No</th>
+                            <th style="min-width: 280px;">
+                                <a href="{{ route('party-sales.index', array_merge(request()->all(), ['sort' => $sort])) }}">
+                                    Customer Name
+                                    @if(request('sort') === 'asc') &#9650; @elseif(request('sort') === 'desc') &#9660; @endif
+                                </a>
+                            </th>
+                            <th>Bill No</th>
+                            <th>Bill Date</th>
+                            <th>Aging<br>(days)</th>
+                            <th>Amount</th>
+                            <th>CD</th>
+                            <th>Product Return</th>
+                            <th>Online Payment</th>
+                            <th>Amount Received</th>
+                            <th class="hide-print">Balance</th>
+                            <th class="hide-print">Beat</th>
+                            <th class="hide-print">Remarks</th>
+                            <th class="hide-print">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php
+                            $totalProductReturn = 0;
+                            $totalOnlinePayment = 0;
+                            $totalAmountReceived = 0;
+                        @endphp
+                        @forelse($sales as $sale)
+                            @if($currentSalesman !== $sale->beat->salesman)
+                                <tr class="salesman-row">
+                                    <td colspan="14" class="salesman-cell">{{ $sale->beat->salesman }}</td>
+                                </tr>
+                                @php
+                                    $currentSalesman = $sale->beat->salesman;
+                                    $serial = 1;
+                                @endphp
+                            @endif
+                            @php
+                                $billDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime($sale->bill_date)));
+                                $aging = $billDate->diffInDays(\Carbon\Carbon::today(), false);
+                                $totalProductReturn += $sale->product_return ?? 0;
+                                $totalOnlinePayment += $sale->online_payment ?? 0;
+                                $totalAmountReceived += $sale->amount_received ?? 0;
+                            @endphp
+                            <tr>
+                                <td>{{ $serial++ }}</td>
+                                <td class="customer-name">
+                                    <select name="sales[{{ $sale->id }}][customer_id]" class="form-control w-100">
+                                        {{-- <option value="">Select Customer</option> --}}
+                                        @foreach($customers as $customer)
+                                            <option value="{{ $customer->id }}" 
+                                                {{ $sale->customer_id == $customer->id ? 'selected' : '' }}>
+                                                {{ $customer->name }} ({{ $customer->beat->name ?? 'No Beat' }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @if($sale->modified)
+                                        <span class="badge bg-success ms-2">Modified</span>
+                                    @endif
+                                </td>
+                                <td>{{ $sale->bill_no }}</td>
+                                <td class="date-col">{{ $sale->bill_date ? \Carbon\Carbon::parse($sale->bill_date)->format('d-m-Y') : '' }}</td>
+                                <td class="aging-col">{{ $aging }}</td>
+                                <td>{{ $sale->amount }}</td>
+                                <td>
+                                    <input type="number" class="form-control"
+                                        name="sales[{{ $sale->id }}][cd]"
+                                        value="{{ $sale->cd }}"
+                                        max="{{ $sale->amount }}"
+                                        oninput="validateMax(this, {{ $sale->amount }}); updateBalance({{ $sale->id }}, {{ $sale->amount }})">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control"
+                                        name="sales[{{ $sale->id }}][product_return]"
+                                        value="{{ $sale->product_return }}"
+                                        max="{{ $sale->amount }}"
+                                        oninput="validateMax(this, {{ $sale->amount }}); updateBalance({{ $sale->id }}, {{ $sale->amount }})">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control"
+                                        name="sales[{{ $sale->id }}][online_payment]"
+                                        value="{{ $sale->online_payment }}"
+                                        oninput="updateBalance({{ $sale->id }}, {{ $sale->amount }})">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control"
+                                        name="sales[{{ $sale->id }}][amount_received]"
+                                        value="{{ $sale->amount_received }}"
+                                        oninput="updateBalance({{ $sale->id }}, {{ $sale->amount }})">
+                                </td>
+                                <td class="hide-print">
+                                    <input type="number" class="form-control balance" 
+                                        style="width: 100px;" 
+                                        id="balance-{{ $sale->id }}" 
+                                        name="sales[{{ $sale->id }}][balance]"
+                                        data-amount="{{ $sale->amount }}" 
+                                        readonly>
+                                </td>
+                                <td class="hide-print">{{ $sale->beat->name }}</td>
+                                <td class="hide-print">{{ $sale->remarks }}</td>
+                                <td class="hide-print">
+                                    <a href="{{ route('party-sales.edit', $sale->id) }}" class="btn btn-sm btn-warning icon-btn" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                        <span class="btn-text">Edit</span>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-danger icon-btn" onclick="deleteSale({{ $sale->id }})" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                        <span class="btn-text">Delete</span>
+                                    </button>
+                                </td>
+
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="14" class="text-center text-muted">
+                                    No data available
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                    @if($sales->isNotEmpty())
+                        <tfoot class="hide-print">
+                            <tr style="font-weight:bold; background-color:#f0f0f0;">
+                                <td colspan="7" class="text-end">Total:</td>
+                                <td id="totalProductReturn">{{ $totalProductReturn }}</td>
+                                <td id="totalOnlinePayment">{{ $totalOnlinePayment }}</td>
+                                <td id="totalAmountReceived">{{ $totalAmountReceived }}</td>
+                                <td colspan="4"></td>
+                            </tr>
+                        </tfoot>
+                    @endif
+                </table>
+            </div>
             @if($sales->isNotEmpty())
                 <div class="text-end mt-3">
                     <button type="submit" class="btn btn-success">
@@ -318,6 +324,16 @@
             document.getElementById('totalAmountReceived').textContent = totalAmountReceived;
         }
 
+        function printPage() {
+            // const printContents = document.getElementById('printArea').innerHTML;
+            // const originalContents = document.body.innerHTML;
+
+            // document.body.innerHTML = printContents;
+            // window.print();
+            // document.body.innerHTML = originalContents;
+            // location.reload();
+            window.print();
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.querySelector('form[action="{{ route('bulk-update') }}"]');

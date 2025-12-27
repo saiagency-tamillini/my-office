@@ -185,7 +185,7 @@ class fileController extends Controller
                 if (!empty($row['Bill Date'])) {
                     $billDate = \Carbon\Carbon::createFromFormat('d/m/Y', $row['Bill Date'])->format('Y-m-d');
                 }
-                $customerName = trim($row['Customer Name']);
+                $customerName = strtoupper(trim($row['Customer Name']));
                 $customer = null;
                 if ($customerName) {
                     $customer = Customer::firstOrCreate(

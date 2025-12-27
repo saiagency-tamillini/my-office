@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>@yield('title', 'My App')</title>
+    <title>@yield('title', 'Sai Agency')</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
@@ -28,6 +28,9 @@
             </a>
             <a class="nav-link" href="{{ route('party-sales.index') }}">
                 <i class="bi bi-list-check"></i> Party Sales
+            </a>
+             <a class="nav-link" href="{{ route('customers.index') }}">
+                <i class="bi bi-list-check"></i> Customers
             </a>
         </div>
     </div>
