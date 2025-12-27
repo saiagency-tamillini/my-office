@@ -203,7 +203,8 @@
                                 <td id="totalProductReturn">{{ $totalProductReturn }}</td>
                                 <td id="totalOnlinePayment">{{ $totalOnlinePayment }}</td>
                                 <td id="totalAmountReceived">{{ $totalAmountReceived }}</td>
-                                <td colspan="4"></td>
+                                <td id="totalBalance"></td>
+                                <td colspan="2"></td>
                             </tr>
                         </tfoot>
                     @endif
@@ -223,7 +224,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.balance').forEach(balanceInput => {
-                const saleId = balanceInput.id.split('-')[1];
+                const saleId = balanceInput.id.split('-')[1];                
                 const amount = parseFloat(balanceInput.dataset.amount);                
                 updateBalance(saleId, amount);
             });
@@ -270,19 +271,6 @@
         }
         function updateBalance(saleId, amount) {
             const cd = parseFloat(document.querySelector(`input[name='sales[${saleId}][cd]']`).value) || 0;
-            const productReturn = parseFloat(document.querySelector(`input[name='sales[${saleId}][product_return]']`).value) || 0;
-            const onlinePayment = parseFloat(document.querySelector(`input[name='sales[${saleId}][online_payment]']`).value) || 0;
-            const amountReceived = parseFloat(document.querySelector(`input[name='sales[${saleId}][amount_received]']`).value) || 0;
-
-            let balance = amount - (cd + productReturn + onlinePayment + amountReceived);
-    
-            if (balance < 0) balance = 0;
-
-            document.getElementById(`balance-${saleId}`).value = balance;
-        }
-
-        function updateBalance(saleId, amount) {
-            const cd = parseFloat(document.querySelector(`input[name='sales[${saleId}][cd]']`).value) || 0;
             const productReturnInput = document.querySelector(`input[name='sales[${saleId}][product_return]']`);
             const onlinePaymentInput = document.querySelector(`input[name='sales[${saleId}][online_payment]']`);
             const amountReceivedInput = document.querySelector(`input[name='sales[${saleId}][amount_received]']`);
@@ -308,6 +296,7 @@
             let totalProductReturn = 0;
             let totalOnlinePayment = 0;
             let totalAmountReceived = 0;
+            let totalBalance = 0;
 
             document.querySelectorAll("input[name$='[product_return]']").forEach(input => {
                 totalProductReturn += parseFloat(input.value) || 0;
@@ -318,10 +307,15 @@
             document.querySelectorAll("input[name$='[amount_received]']").forEach(input => {
                 totalAmountReceived += parseFloat(input.value) || 0;
             });
+            document.querySelectorAll("input.balance").forEach(input => {
+                totalBalance += parseFloat(input.value) || 0;
+            });
 
             document.getElementById('totalProductReturn').textContent = totalProductReturn;
             document.getElementById('totalOnlinePayment').textContent = totalOnlinePayment;
             document.getElementById('totalAmountReceived').textContent = totalAmountReceived;
+            const totalBalanceCell = document.getElementById('totalBalance');
+            if(totalBalanceCell) totalBalanceCell.textContent = totalBalance;
         }
 
         function printPage() {
@@ -379,6 +373,18 @@
                     } else {
                         row.style.display = 'none';
                     }
+                });
+            });
+            document.querySelectorAll('table input[type="number"]').forEach(input => {
+                input.addEventListener('input', () => {
+                    const length = input.value.length;
+                    input.style.width = `${Math.max(length, 2) + 1}ch`; // min 2 chars width
+                });
+            });
+            document.querySelectorAll('table td').forEach(td => {
+                td.addEventListener('click', e => {
+                    const input = td.querySelector('input, select');
+                    if (input) input.focus();
                 });
             });
         });

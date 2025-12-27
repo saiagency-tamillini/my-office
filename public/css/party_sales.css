@@ -22,6 +22,46 @@
 .salesman-row td {
     background-color:#c0d3ef;
 }
+table input {
+    border: none !important;
+    background: transparent !important;
+    padding: 2px 4px !important;
+    width: 100% !important;
+    box-sizing: border-box;
+}
+table input,
+table select {
+    border: 1px solid #ccc;   /* optional: lighter border */
+    border-radius: 4px;
+    padding: 2px 5px;
+    width: 100%;              /* fit the cell */
+    box-sizing: border-box;
+    font-size: 12px;
+}
+table input {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 12px;
+    width: auto;       /* let it adjust */
+    min-width: 40px;   /* for 2-digit numbers */
+    max-width: 150px;  /* maximum allowed width */
+    box-sizing: border-box;
+}
+table td:nth-child(6), /* Amount */
+table td:nth-child(7), /* CD */
+table td:nth-child(8), /* Product Return */
+table td:nth-child(9), /* Online Payment */
+table td:nth-child(10) /* Amount Received */ {
+    min-width: 60px;      /* enough for 2-digit numbers */
+    max-width: 100px;     /* prevent excessive width */
+    text-align: right;    /* numeric alignment */
+    white-space: nowrap;
+}
+table td input[type="number"] {
+    text-align: right;
+}
+
 @media print {
 
     /* A4 portrait page setup */
