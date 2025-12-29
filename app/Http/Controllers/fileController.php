@@ -199,6 +199,7 @@ class fileController extends Controller
                         'bill_no'        => $row['Bill No'],
                         'bill_date'      => $billDate,
                         'amount'         => $row['Amount'],
+                        'balance'         => $row['Amount'],
                     ]);
                 } catch (QueryException $e) {
                     if ($e->getCode() == 23000) {

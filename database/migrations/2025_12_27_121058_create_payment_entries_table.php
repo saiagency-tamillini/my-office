@@ -9,16 +9,14 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-     public function up(): void
+    public function up(): void
     {
-        Schema::create('party_sales', function (Blueprint $table) {
+        Schema::create('payment_entries', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('beat_id')->nullable();
-            $table->integer('s_no')->nullable();
+            $table->unsignedBigInteger('part_sale_id')->nullable();
             $table->unsignedBigInteger('customer_id')->nullable();
-            $table->string('bill_no')->nullable()->unique();
-            $table->date('bill_date')->nullable();
-            $table->string('aging')->nullable();
+            $table->string('bill_no')->nullable();
+            $table->date('payment_date')->nullable();
             $table->decimal('amount', 12, 2)->default(0);
             $table->string('cd')->nullable();
             $table->string('product_return')->nullable();
@@ -26,16 +24,19 @@ return new class extends Migration
             $table->decimal('amount_received', 12, 2)->nullable();
             $table->decimal('balance', 12, 2)->nullable();
             $table->string('remarks')->nullable();
-            $table->boolean('modified')->default(false);
-            $table->boolean('first_entry')->default(false);
             $table->timestamps();
-
-            $table->foreign('beat_id')->references('id')->on('beats')->onDelete('set null');
+            
+            $table->foreign('part_sale_id')->references('id')->on('party_sales')->onDelete('set null');
+            $table->foreign('customer_id')->references('id')->on('customers')->onDelete('set null');
+            $table->index(['part_sale_id', 'id'], 'idx_pe_part_sale_id_id');
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        Schema::dropIfExists('party_sales');
+        Schema::dropIfExists('payment_entries');
     }
 };

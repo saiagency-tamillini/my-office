@@ -29,8 +29,11 @@
             <a class="nav-link" href="{{ route('party-sales.index') }}">
                 <i class="bi bi-list-check"></i> Party Sales
             </a>
-             <a class="nav-link" href="{{ route('customers.index') }}">
+            <a class="nav-link" href="{{ route('customers.index') }}">
                 <i class="bi bi-list-check"></i> Customers
+            </a>
+            <a class="nav-link" href="{{ route('reportTable') }}">
+                <i class="bi bi-list-check"></i> Sales Report
             </a>
         </div>
     </div>

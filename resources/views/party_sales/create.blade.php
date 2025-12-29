@@ -10,7 +10,7 @@
             @method('PUT')
         @endif
 
-        <div class="mb-3">
+        {{-- <div class="mb-3">
             <label>Beat</label>
             <select name="beat_id" class="form-control">
                 @foreach($beats as $beat)
@@ -19,7 +19,7 @@
                     </option>
                 @endforeach
             </select>
-        </div>
+        </div> --}}
 
         <div class="mb-3">
             <label>Customer Name</label>
@@ -32,10 +32,10 @@
             </select>
         </div>
 
-        <div class="mb-3">
+        {{-- <div class="mb-3">
             <label>Bill No</label>
             <input type="text" name="bill_no" class="form-control" value="{{ $partySale->bill_no ?? old('bill_no') }}">
-        </div>
+        </div> --}}
 
         <div class="mb-3">
             <label>Bill Date</label>

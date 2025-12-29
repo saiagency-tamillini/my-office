@@ -2,6 +2,7 @@
 
 return [
     'beats' => [
+        'Manual'           => 'Anantha Raja',
         'AALAVAYAL'        => 'BALA',
         'ANNA SALAI'       => 'BALA',
         'BUSSTAND'         => 'SHRI MAHESHWARAN',

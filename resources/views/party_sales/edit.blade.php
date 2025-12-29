@@ -44,7 +44,7 @@
 
         <div class="mb-3">
             <label for="bill_no" class="form-label">Bill No</label>
-            <input type="text" name="bill_no" id="bill_no" class="form-control" value="{{ $partySale->bill_no }}">
+            <input type="text" name="bill_no" id="bill_no" class="form-control" value="{{ $partySale->bill_no }}" readonly>
         </div>
 
         <div class="mb-3">

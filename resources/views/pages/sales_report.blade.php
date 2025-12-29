@@ -5,9 +5,9 @@
 @endpush
 @section('content')
     <div class="container">
-        <h2>Party Sales List</h2>
+        <h2>Sales Man Report</h2>
 
-        <form method="GET" action="{{ route('party-sales.index') }}" class="mb-3">
+        <form method="GET" action="{{ route('reportTable') }}" class="mb-3">
             <div class="mb-2">
                 <label class="form-label">Bill Date:</label>
                 <input type="date"
@@ -41,7 +41,7 @@
                 </select>
             </div>
             <button type="submit" class="btn btn-primary me-2">Filter</button>
-            <a href="{{ route('party-sales.index') }}" class="btn btn-secondary">Reset</a>
+            <a href="{{ route('reportTable') }}" class="btn btn-secondary">Reset</a>
         </form>
 
         <a href="{{ route('party-sales.create') }}" class="btn btn-primary mb-3">Add New</a>
@@ -64,7 +64,7 @@
             $currentSalesman = null;
             $serial = 1;
         @endphp
-        <form method="POST" action="{{ route('bulk-update') }}">
+        <form method="POST" action="{{ route('bulk-sale-update') }}">
             @csrf
             <div id="printArea">
                 @if($selectedBeat)
@@ -78,7 +78,7 @@
                         <tr>
                             <th>S.No</th>
                             <th style="min-width: 280px;">
-                                <a href="{{ route('party-sales.index', array_merge(request()->all(), ['sort' => $sort])) }}">
+                                <a href="{{ route('reportTable', array_merge(request()->all(), ['sort' => $sort])) }}">
                                     Customer Name
                                     @if(request('sort') === 'asc') &#9650; @elseif(request('sort') === 'desc') &#9660; @endif
                                 </a>
@@ -117,23 +117,15 @@
                             @php
                                 $billDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime($sale->bill_date)));
                                 $aging = $billDate->diffInDays(\Carbon\Carbon::today(), false);
-                                $totalProductReturn += $sale->product_return ?? 0;
-                                $totalOnlinePayment += $sale->online_payment ?? 0;
-                                $totalAmountReceived += $sale->amount_received ?? 0;
+                                // $totalProductReturn += $sale->product_return ?? 0;
+                                // $totalOnlinePayment += $sale->online_payment ?? 0;
+                                // $totalAmountReceived += $sale->amount_received ?? 0;
                                 $totalBalance += $sale->balance ?? 0;
                             @endphp
                             <tr>
                                 <td>{{ $serial++ }}</td>
                                 <td class="customer-name">
-                                    <select name="sales[{{ $sale->id }}][customer_id]" class="form-control w-100"
-                                         {{ !$is_today_report ? 'disabled' : '' }}>
-                                        @foreach($customers as $customer)
-                                            <option value="{{ $customer->id }}" 
-                                                {{ $sale->customer_id == $customer->id ? 'selected' : '' }}>
-                                                {{ $customer->name }} ({{ $customer->beat->name ?? 'No Beat' }})
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    {{ $sale->customer->name }}
                                     @if($sale->modified)
                                         <span class="badge bg-success ms-2">Modified</span>
                                     @endif
@@ -149,40 +141,36 @@
                                 <td>
                                     <input type="number" class="form-control"
                                         name="sales[{{ $sale->id }}][cd]"
-                                        value="{{ $sale->cd }}"
+                                        value=""
                                         max="{{ $sale->amount }}"
-                                        oninput="validateMax(this, {{ $sale->balance }}); updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{ !$is_today_report || $sale->first_entry ? 'readonly' : '' }}>
+                                        oninput="validateMax(this, {{ $sale->latest_balance }}); updateBalance({{ $sale->id }}, {{ $sale->latest_balance }})">
                                 </td>
                                 <td>
                                     <input type="number" class="form-control"
                                         name="sales[{{ $sale->id }}][product_return]"
-                                        value="{{ $sale->product_return }}"
+                                        value=""
                                         max="{{ $sale->amount }}"
-                                        oninput="validateMax(this, {{ $sale->balance }}); updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{ !$is_today_report || $sale->first_entry? 'readonly' : '' }}>
+                                        oninput="validateMax(this, {{ $sale->latest_balance }}); updateBalance({{ $sale->id }}, {{ $sale->latest_balance }})">
                                 </td>
                                 <td>
                                     <input type="number" class="form-control"
                                         name="sales[{{ $sale->id }}][online_payment]"
-                                        value="{{ $sale->online_payment }}"
-                                        oninput="updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{ !$is_today_report || $sale->first_entry? 'readonly' : '' }}>
+                                        value=""
+                                        oninput="updateBalance({{ $sale->id }}, {{ $sale->latest_balance }})">
                                 </td>
                                 <td>
                                     <input type="number" class="form-control"
                                         name="sales[{{ $sale->id }}][amount_received]"
-                                        value="{{ $sale->amount_received }}"
-                                        oninput="updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{ !$is_today_report || $sale->first_entry? 'readonly' : '' }}>
+                                        value=""
+                                        oninput="updateBalance({{ $sale->id }}, {{ $sale->latest_balance }})">
                                 </td>
                                 <td class="hide-print">
                                     <input type="number" class="form-control balance" 
                                         style="width: 100px;" 
                                         id="balance-{{ $sale->id }}" 
                                         name="sales[{{ $sale->id }}][balance]"
-                                        data-amount="{{ $sale->balance }}"
-                                        value="{{ $sale->balance }}" 
+                                        data-amount="{{ $sale->latest_balance }}"
+                                        value="{{ $sale->latest_balance }}" 
                                         readonly>
                                 </td>
                                 <td class="hide-print">{{ $sale->beat->name }}</td>
@@ -197,6 +185,7 @@
                                         <span class="btn-text">Delete</span>
                                     </button>
                                 </td>
+
                             </tr>
                         @empty
                             <tr>
@@ -232,13 +221,6 @@
 @endsection
 @push('scripts')
     <script>
-        // document.addEventListener('DOMContentLoaded', function() {
-        //     document.querySelectorAll('.balance').forEach(balanceInput => {
-        //         const saleId = balanceInput.id.split('-')[1];                
-        //         const amount = parseFloat(balanceInput.dataset.amount);                
-        //         updateBalance(saleId, amount);
-        //     });
-        // });
         function deleteSale(id) {
             if (!confirm('Are you sure you want to delete this record?')) return;
 
@@ -340,7 +322,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('form[action="{{ route('bulk-update') }}"]');
+            const form = document.querySelector('form[action="{{ route('bulk-sale-update') }}"]');
             const PrevTotalAmount = {{ $totalAmountReceived}};
 
             form.addEventListener('submit', function(e) {

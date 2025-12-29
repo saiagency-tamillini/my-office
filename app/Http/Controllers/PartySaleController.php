@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PartySale;
 use App\Models\Beat;
 use App\Models\Customer;
+use App\Models\PaymentEntry;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -20,9 +21,13 @@ class PartySaleController extends Controller
         // Get all salesmen for the filter checkboxes
         $salesmen = Beat::select('salesman')->distinct()->pluck('salesman');
         $beats = Beat::orderBy('name')->get();
+        $is_today_report = false;
         $date = $request->filled('bill_date')
             ? Carbon::parse($request->bill_date)->format('Y-m-d')
             : Carbon::today()->format('Y-m-d');
+        if($date == Carbon::today()->format('Y-m-d')){
+            $is_today_report= true;
+        }
         $query = PartySale::with('beat')
             ->join('beats', 'party_sales.beat_id', '=', 'beats.id')
              ->leftJoin('customers', 'party_sales.customer_id', '=', 'customers.id')
@@ -47,7 +52,8 @@ class PartySaleController extends Controller
         if ($request->filled('beat_id')) {
             $selectedBeat = Beat::find($request->beat_id);
         }
-        return view('party_sales.index', compact('sales', 'salesmen', 'customers','beats','selectedBeat'));
+        // dd($is_today_report);
+        return view('party_sales.index', compact('sales', 'salesmen', 'customers','beats','selectedBeat','is_today_report'));
     }
 
     public function create()
@@ -60,9 +66,7 @@ class PartySaleController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'beat_id' => 'required|exists:beats,id',
             'customer_id' => 'required|exists:customers,id',
-            'bill_no' => 'nullable|string|max:100',
             'bill_date' => 'nullable|date',
             'aging' => 'nullable|string',
             'amount' => 'nullable|numeric',
@@ -74,11 +78,24 @@ class PartySaleController extends Controller
             'remarks' => 'nullable|string',
         ]);
 
-        
+        $manualBeat = \App\Models\Beat::where('name', 'Manual')->firstOrFail();
+
+        $lastSale = PartySale::where('bill_no', 'like', 'MAN%')
+                            ->orderBy('id', 'desc')
+                            ->first();
+
+        if ($lastSale && preg_match('/MAN(\d+)/', $lastSale->bill_no, $matches)) {
+            $lastNumber = (int) $matches[1];
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1;
+        }
+
+        $bill_no = 'MAN' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
         PartySale::create([
-            'beat_id' => $request->beat_id,
+            'beat_id' => $manualBeat->id,
             'customer_id' => $request->customer_id,
-            'bill_no' => $request->bill_no,
+            'bill_no' => $bill_no,
             'bill_date' => $request->bill_date,
             'aging' => $request->aging,
             'amount' => $request->amount,
@@ -86,7 +103,7 @@ class PartySaleController extends Controller
             'product_return' => $request->product_return,
             'online_payment' => $request->online_payment,
             'amount_received' => $request->amount_received,
-            'balance' => $request->balance,
+            'balance' => $request->amount,
             'remarks' => $request->remarks,
         ]);
 
@@ -105,7 +122,7 @@ class PartySaleController extends Controller
         $validated = $request->validate([
             'beat_id' => 'required|exists:beats,id',
             'customer_id' => 'required|exists:customers,id',
-            'bill_no' => 'nullable|string|max:100',
+            'bill_no' => 'nullable|string|max:100', 
             'bill_date' => 'nullable|date',
             'aging' => 'nullable|string',
             'amount' => 'nullable|numeric',
@@ -241,20 +258,43 @@ class PartySaleController extends Controller
             if (!$sale) {
                 continue;
             }
-    
-            $updateData = [
+            $customerChanged = false;
+
+            if (isset($data['customer_id']) && $data['customer_id'] != $sale->customer_id) {
+                $customerChanged = true;
+            }
+
+            $sale->fill([
+                'customer_id'     => $customerChanged ? $data['customer_id'] : $sale->customer_id,
                 'aging'           => $data['aging'] ?? $sale->aging,
                 'cd'              => $data['cd'] ?? $sale->cd,
                 'product_return'  => $data['product_return'] ?? $sale->product_return,
                 'online_payment'  => $data['online_payment'] ?? $sale->online_payment,
                 'amount_received' => $data['amount_received'] ?? $sale->amount_received,
-                'balance' => $data['balance'] ?? $sale->balance,
-            ];
-            if (isset($data['customer_id']) && $data['customer_id'] != $sale->customer_id) {
-                $updateData['customer_id'] = $data['customer_id'];
-                $updateData['modified'] = true;
+                'balance'         => $data['balance'] ?? $sale->balance,
+                'modified'        => $customerChanged ? true : $sale->modified,
+            ]);
+
+           if ($sale->isDirty(['amount_received', 'cd', 'product_return', 'online_payment'])) {
+
+                $changedFields = $sale->getDirty();
+                $sale->first_entry = true;
+                $sale->save();
+
+                PaymentEntry::create([
+                    'part_sale_id'     => $sale->id,
+                    'customer_id'      => $sale->customer_id,
+                    'bill_no'          => $sale->bill_no,
+                    'payment_date'     => now(),
+                    'amount'           => $sale->amount,
+                    'cd'               => $changedFields['cd'] ?? null,
+                    'product_return'   => $changedFields['product_return'] ?? null,
+                    'online_payment'   => $changedFields['online_payment'] ?? null,
+                    'amount_received'  => $changedFields['amount_received'] ?? null,
+                    'balance'          => $changedFields['balance'] ?? null,
+                    'remarks'          => $sale->remarks
+                ]);
             }
-            $sale->update($updateData);
         }
         return redirect()->back()->with('success', 'Sales updated successfully');
     }
