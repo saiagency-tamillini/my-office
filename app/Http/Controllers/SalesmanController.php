@@ -207,7 +207,6 @@ class SalesmanController extends Controller
 
         $customer = Customer::findOrFail($request->customer_id);
 
-        // Use Eloquent to get payment entries
         $paymentEntries = PaymentEntry::with('customer')
             ->where('customer_id', $customer->id)
             ->orderBy('bill_no')
@@ -215,20 +214,24 @@ class SalesmanController extends Controller
             ->get()
             ->groupBy('bill_no')
             ->map(function ($entries, $billNo) {
-                // Check if any entry is fully paid or status complete
                 $isPaid = $entries->contains(fn($entry) => $entry->balance == 0 || $entry->status === 'complete');
 
-                // Add the is_paid flag to **each entry** (optional)
                 $entries = $entries->map(function ($entry) use ($isPaid) {
                     $entry->is_paid = $isPaid;
                     return $entry;
                 });
+            return $entries;
+        });
+        $pendingBills = $paymentEntries->filter(fn($entries) =>
+            optional($entries->first())->is_paid === false
+        );
 
-                return $entries;
-            });
+        $completedBills = $paymentEntries->filter(fn($entries) =>
+            optional($entries->first())->is_paid === true
+        );
 
+        $paymentEntries = $pendingBills->merge($completedBills);
         return view('pages.salesman.details', compact('customer', 'paymentEntries'));
     }
 }
-
 

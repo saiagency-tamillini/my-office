@@ -269,26 +269,27 @@ class PartySaleController extends Controller
             ]);
 
             $customerChanged = $sale->isDirty('customer_id');
-
-            // user actually entered payment-related data
-            $hasPaymentInput =
-                !empty($data['amount_received']) ||
-                !empty($data['cd']) ||
-                !empty($data['product_return']) ||
-                !empty($data['online_payment']);
+            $paymentChanged = $sale->isDirty([
+                'amount_received',
+                'cd',
+                'product_return',
+                'online_payment',
+                'balance'
+            ]);
 
             if ($sale->isDirty()) {
                 $sale->modified = $customerChanged;
                 $sale->save();
             }
 
-            if ($customerChanged && !$hasPaymentInput) {
+            if ($customerChanged && !$paymentChanged) {
                 PaymentEntry::where('bill_no', $sale->bill_no)
                     ->update(['customer_id' => $sale->customer_id]);
 
                 continue;
             }
-            if (!$sale->first_entry) {
+
+            if ($paymentChanged) {
 
                 $sale->first_entry = true;
                 $sale->save();
@@ -307,32 +308,10 @@ class PartySaleController extends Controller
                     'remarks'          => $sale->remarks,
                     'status'           => $sale->balance == 0 ? 'complete' : 'pending',
                 ]);
-
-                continue;
-            }
-
-            if ($hasPaymentInput) {
-
-                PaymentEntry::create([
-                    'part_sale_id'     => $sale->id,
-                    'customer_id'      => $sale->customer_id,
-                    'bill_no'          => $sale->bill_no,
-                    'payment_date'     => now(),
-                    'amount'           => $sale->amount,
-                    'cd'               => $data['cd'] ?? null,
-                    'product_return'   => $data['product_return'] ?? null,
-                    'online_payment'   => $data['online_payment'] ?? null,
-                    'amount_received'  => $data['amount_received'] ?? null,
-                    'balance'          => $sale->balance,
-                    'remarks'          => $sale->remarks,
-                    'status'           => $sale->balance == 0 ? 'complete' : 'pending',
-                ]);
             }
         }
-
         return redirect()->back()->with('success', 'Sales updated successfully');
     }
-
 }
 
 
