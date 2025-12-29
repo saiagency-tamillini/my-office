@@ -120,7 +120,7 @@
                                 // $totalProductReturn += $sale->product_return ?? 0;
                                 // $totalOnlinePayment += $sale->online_payment ?? 0;
                                 // $totalAmountReceived += $sale->amount_received ?? 0;
-                                $totalBalance += $sale->balance ?? 0;
+                                $totalBalance += $sale->latest_balance ?? 0;
                             @endphp
                             <tr>
                                 <td>{{ $serial++ }}</td>

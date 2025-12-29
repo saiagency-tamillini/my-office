@@ -22,3 +22,14 @@ Route::get('party-sales-download', [PartySaleController::class, 'download'])->na
 Route::resource('party-sales', PartySaleController::class);
 
 Route::resource('customers', CustomerController::class);
+
+Route::get('/customers/{customer}/transactions', [CustomerController::class, 'transactions'])
+    ->name('customers.transactions');
+
+
+// Show salesman table page
+Route::get('sales-man', [SalesmanController::class, 'index'])->name('salesman');
+
+// Show payment entries for a salesman (POST request from button)
+Route::post('sales-man', [SalesmanController::class, 'salesManDetails'])->name('salesman.reports');
+

@@ -42,7 +42,7 @@
                 <a href="{{ route('customers.index', [
                     'sort_by' => 'beat_id',
                     'sort_order' => sortOrder('beat_id', $sortBy, $sortOrder)
-                ]) }}" class="text-white text-decoration-none">
+                    ]) }}" class="text-white text-decoration-none">
                     Beat
                 </a>
             </th>
@@ -70,6 +70,11 @@
                             Delete
                         </button>
                     </form>
+
+                    <a href="{{ route('customers.transactions', $customer->id) }}"
+                        class="btn btn-sm btn-primary mt-1">
+                        View Transactions
+                    </a>
                 </td>
             </tr>
         @empty

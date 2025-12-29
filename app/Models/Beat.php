@@ -8,8 +8,8 @@ class Beat extends Model
 {
     protected $fillable = ['name', 'salesman'];
 
-    public function bills()
+    public function customers()
     {
-        // return $this->hasMany(CustomerBill::class);
+        return $this->hasMany(Customer::class, 'beat_id', 'id');
     }
 }

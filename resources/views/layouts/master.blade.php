@@ -35,6 +35,9 @@
             <a class="nav-link" href="{{ route('reportTable') }}">
                 <i class="bi bi-list-check"></i> Sales Report
             </a>
+            <a class="nav-link" href="{{ route('salesman') }}">
+                <i class="bi bi-list-check"></i> Sales Man
+            </a>
         </div>
     </div>
 </nav>

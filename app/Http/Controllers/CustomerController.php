@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Customer;
 use App\Models\Beat;
+use Illuminate\Support\Facades\DB;
 
 class CustomerController extends Controller
 {
@@ -64,5 +65,17 @@ class CustomerController extends Controller
     {
         $customer->delete();
         return redirect()->route('customers.index')->with('success', 'Customer deleted successfully.');
+    }
+
+    public function transactions(Customer $customer)
+    {
+        $transactions = DB::table('payment_entries')
+            ->where('customer_id', $customer->id)
+            ->orderBy('bill_no')
+            ->orderBy('created_at')
+            ->get()
+            ->groupBy('bill_no');
+
+        return view('customers.transactions', compact('customer', 'transactions'));
     }
 }

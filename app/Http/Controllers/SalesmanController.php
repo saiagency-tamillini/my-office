@@ -12,6 +12,76 @@ use Illuminate\Support\Facades\DB;
 
 class SalesmanController extends Controller
 {
+    public function index()
+    {
+        $salesmen = Beat::with('customers')->withCount('customers')->get()
+        ->groupBy('salesman')
+        ->map(function ($beats, $salesmanName) {
+
+            $totalCustomers = $beats->sum('customers_count');
+
+            $customerIds = $beats->pluck('customers.*.id')->flatten();
+
+            $paymentEntries = PaymentEntry::with('customer')
+                ->whereIn('customer_id', $customerIds)
+                ->orderBy('bill_no')
+                ->orderBy('created_at')
+                ->get()
+                ->groupBy('bill_no');
+
+            $totalPending = $paymentEntries->map(function ($entries) {
+                if ($entries->contains(fn($entry) => $entry->status === 'complete')) {
+                    return 0;
+                }
+                return $entries->last()->balance;
+            })->sum();
+
+            $beats = $beats->map(function ($beat) use ($paymentEntries) {
+
+                $beatCustomerIds = $beat->customers->pluck('id');
+
+                $beatPending = $paymentEntries
+                    ->filter(fn($entries) => $beatCustomerIds->contains($entries->first()->customer_id))
+                    ->map(function ($entries) {
+                        if ($entries->contains(fn($entry) => $entry->status === 'complete')) {
+                            return 0;
+                        }
+                        return $entries->last()->balance;
+                    })
+                    ->sum();
+
+                $beat->customers->map(function ($customer) use ($paymentEntries) {
+                    $customerEntries = $paymentEntries
+                        ->filter(fn($entries) => $entries->first()->customer_id == $customer->id);
+
+                    $customerPending = $customerEntries
+                        ->map(function ($entries) {
+                            if ($entries->contains(fn($entry) => $entry->status === 'complete')) {
+                                return 0;
+                            }
+                            return $entries->last()->balance;
+                        })
+                        ->sum();
+
+                    $customer->pending = $customerPending;
+                    return $customer;
+                });
+
+                $beat->pending = $beatPending;
+                return $beat;
+            });
+
+            return [
+                'beats' => $beats,
+                'total_customers' => $totalCustomers,
+                'total_pending' => $totalPending,
+            ];
+        });
+
+        // dd($salesmen);
+        return view('pages.salesman.index', compact('salesmen'));
+    }
+
     public function report_table(Request $request)
     {
         $salesmen = Beat::select('salesman')->distinct()->pluck('salesman');
@@ -29,7 +99,7 @@ class SalesmanController extends Controller
                     FROM payment_entries pe2
                     WHERE pe2.part_sale_id = pe1.part_sale_id
                 )')
-                ->where('pe1.balance', '!=', 0);
+                ->where('pe1.status', 'pending');
         })
         ->pluck('id');
         $latestPayments = DB::table('payment_entries as pe1')
@@ -57,7 +127,8 @@ class SalesmanController extends Controller
                 'customers.name as customer_name',
                 'latest_payment.amount_received as latest_amount_received',
                 'latest_payment.balance as latest_balance',
-                'latest_payment.payment_date as latest_payment_date'
+                'latest_payment.payment_date as latest_payment_date',
+                'latest_payment.status as latest_status'
             );
 
         if ($request->filled('salesmen')) {
@@ -121,9 +192,43 @@ class SalesmanController extends Controller
                             'amount_received'  => $changedFields['amount_received'] ?? null,
                             'balance'          => $data['balance'],
                             'remarks'          => $data['remarks'] ?? null,
+                            'status'           => $data['balance'] == 0 ? 'complete' : 'pending',
                         ]);
             }
         }
         return redirect()->back()->with('success', 'Sales updated successfully');
     }
+
+    public function salesManDetails(Request $request)
+    {
+        $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+        ]);
+
+        $customer = Customer::findOrFail($request->customer_id);
+
+        // Use Eloquent to get payment entries
+        $paymentEntries = PaymentEntry::with('customer')
+            ->where('customer_id', $customer->id)
+            ->orderBy('bill_no')
+            ->orderBy('created_at')
+            ->get()
+            ->groupBy('bill_no')
+            ->map(function ($entries, $billNo) {
+                // Check if any entry is fully paid or status complete
+                $isPaid = $entries->contains(fn($entry) => $entry->balance == 0 || $entry->status === 'complete');
+
+                // Add the is_paid flag to **each entry** (optional)
+                $entries = $entries->map(function ($entry) use ($isPaid) {
+                    $entry->is_paid = $isPaid;
+                    return $entry;
+                });
+
+                return $entries;
+            });
+
+        return view('pages.salesman.details', compact('customer', 'paymentEntries'));
+    }
 }
+
+

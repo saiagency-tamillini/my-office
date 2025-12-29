@@ -292,7 +292,8 @@ class PartySaleController extends Controller
                     'online_payment'   => $changedFields['online_payment'] ?? null,
                     'amount_received'  => $changedFields['amount_received'] ?? null,
                     'balance'          => $changedFields['balance'] ?? null,
-                    'remarks'          => $sale->remarks
+                    'remarks'          => $sale->remarks,
+                    'status'           => $changedFields['balance'] == 0 ? 'complete' : 'pending', 
                 ]);
             }
         }
