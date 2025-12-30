@@ -61,7 +61,27 @@ table td:nth-child(10) /* Amount Received */ {
 table td input[type="number"] {
     text-align: right;
 }
-
+.balance-col {
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+    white-space: nowrap !important;
+    text-align: center;
+}
+.date-col {
+    width: 110px !important;
+    min-width: 110px !important;
+    max-width: 110px !important;
+    /* white-space: nowrap !important; */
+    text-align: center;
+}
+.amount-col {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+    white-space: nowrap !important;
+    text-align: center;
+}
 @media print {
 
     /* A4 portrait page setup */
@@ -157,6 +177,14 @@ table td input[type="number"] {
         white-space: nowrap !important;
         text-align: center;
     }
+    .balance-col {
+        width: 85px !important;
+        min-width: 85px !important;
+        max-width: 85px !important;
+        white-space: nowrap !important;
+        text-align: center;
+    }
+    
     /* Header wrap */
     th.aging-col {
         font-size: 10px;

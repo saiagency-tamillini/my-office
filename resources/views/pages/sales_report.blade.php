@@ -91,7 +91,7 @@
                             <th>Product Return</th>
                             <th>Online Payment</th>
                             <th>Amount Received</th>
-                            <th class="hide-print">Balance</th>
+                            <th >Balance</th>
                             <th class="hide-print">Beat</th>
                             <th class="hide-print">Remarks</th>
                             <th class="hide-print">Action</th>
@@ -152,19 +152,19 @@
                                         max="{{ $sale->amount }}"
                                         oninput="validateMax(this, {{ $sale->latest_balance }}); updateBalance({{ $sale->id }}, {{ $sale->latest_balance }})">
                                 </td>
-                                <td>
+                                <td class="amount-col">
                                     <input type="number" class="form-control"
                                         name="sales[{{ $sale->id }}][online_payment]"
                                         value=""
                                         oninput="updateBalance({{ $sale->id }}, {{ $sale->latest_balance }})">
                                 </td>
-                                <td>
+                                <td class="amount-col">
                                     <input type="number" class="form-control"
                                         name="sales[{{ $sale->id }}][amount_received]"
                                         value=""
                                         oninput="updateBalance({{ $sale->id }}, {{ $sale->latest_balance }})">
                                 </td>
-                                <td class="hide-print">
+                                <td class="balance-col">
                                     <input type="number" class="form-control balance" 
                                         style="width: 100px;" 
                                         id="balance-{{ $sale->id }}" 
@@ -196,7 +196,7 @@
                         @endforelse
                     </tbody>
                     @if($sales->isNotEmpty())
-                        <tfoot class="hide-print">
+                        <tfoot >
                             <tr style="font-weight:bold; background-color:#f0f0f0;">
                                 <td colspan="7" class="text-end">Total:</td>
                                 <td id="totalProductReturn">{{ $totalProductReturn }}</td>
