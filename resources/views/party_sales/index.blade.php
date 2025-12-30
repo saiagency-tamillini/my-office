@@ -126,7 +126,7 @@
                                 <td>{{ $serial++ }}</td>
                                 <td class="customer-name">
                                     <select name="sales[{{ $sale->id }}][customer_id]" class="form-control w-100"
-                                         {{ !$is_today_report ? 'disabled' : '' }}>
+                                         {{ !$is_today_report && $sale->first_entry  ? 'disabled' : '' }}>
                                         @foreach($customers as $customer)
                                             <option value="{{ $customer->id }}" 
                                                 {{ $sale->customer_id == $customer->id ? 'selected' : '' }}>
@@ -152,7 +152,7 @@
                                         value="{{ $sale->cd }}"
                                         max="{{ $sale->amount }}"
                                         oninput="validateMax(this, {{ $sale->balance }}); updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{ !$is_today_report || $sale->first_entry ? 'readonly' : '' }}>
+                                        {{  $sale->first_entry ? 'readonly' : '' }}>
                                 </td>
                                 <td>
                                     <input type="number" class="form-control"
@@ -160,21 +160,21 @@
                                         value="{{ $sale->product_return }}"
                                         max="{{ $sale->amount }}"
                                         oninput="validateMax(this, {{ $sale->balance }}); updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{ !$is_today_report || $sale->first_entry? 'readonly' : '' }}>
+                                        {{ $sale->first_entry? 'readonly' : '' }}>
                                 </td>
                                 <td>
                                     <input type="number" class="form-control"
                                         name="sales[{{ $sale->id }}][online_payment]"
                                         value="{{ $sale->online_payment }}"
                                         oninput="updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{ !$is_today_report || $sale->first_entry? 'readonly' : '' }}>
+                                        {{ $sale->first_entry? 'readonly' : '' }}>
                                 </td>
                                 <td>
                                     <input type="number" class="form-control"
                                         name="sales[{{ $sale->id }}][amount_received]"
                                         value="{{ $sale->amount_received }}"
                                         oninput="updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{ !$is_today_report || $sale->first_entry? 'readonly' : '' }}>
+                                        {{ $sale->first_entry? 'readonly' : '' }}>
                                 </td>
                                 <td class="hide-print">
                                     <input type="number" class="form-control balance" 

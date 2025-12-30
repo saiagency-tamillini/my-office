@@ -9,16 +9,39 @@ use Illuminate\Support\Facades\DB;
 
 class CustomerController extends Controller
 {
-      public function index(Request $request)
+    public function index(Request $request)
     {
-        $sortBy = $request->get('sort_by', 'name'); // default column
-        $sortOrder = $request->get('sort_order', 'asc'); // default order
+        $sortBy = $request->get('sort_by', 'name');
+        $sortOrder = $request->get('sort_order', 'asc');
 
         $customers = Customer::with('beat')
             ->orderBy($sortBy, $sortOrder)
             ->get();
-        return view('customers.index', compact('customers', 'sortBy', 'sortOrder'));
+
+        // Calculate outstanding for each customer
+        foreach ($customers as $customer) {
+            $entries = DB::table('payment_entries')
+                ->where('customer_id', $customer->id)
+                ->orderBy('bill_no')
+                ->orderBy('created_at')
+                ->get()
+                ->groupBy('bill_no');
+
+            $customer->outstanding = $entries->sum(function ($billEntries) {
+                $latest = $billEntries->last();
+                return $latest->balance != 0 ? $latest->balance : 0;
+            });
+        }
+        return view('customers.index', compact(
+            'customers',
+            'sortBy',
+            'sortOrder'
+        ));
     }
+
+
+
+
 
     public function create()
     {

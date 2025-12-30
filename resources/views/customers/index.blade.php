@@ -37,7 +37,6 @@
                     @endif
                 </a>
             </th>
-
             <th>
                 <a href="{{ route('customers.index', [
                     'sort_by' => 'beat_id',
@@ -46,6 +45,7 @@
                     Beat
                 </a>
             </th>
+            <th>Outstanding</th>
             <th width="180">Actions</th>
         </tr>
     </thead>
@@ -55,6 +55,17 @@
                 <td>{{ $loop->iteration }}</td>
                 <td>{{ $customer->name }}</td>
                 <td>{{ $customer->beat->name ?? '-' }}</td>
+                <td>
+                    @if($customer->outstanding > 0)
+                        <span class="text-danger fw-bold">
+                            ₹ {{ number_format($customer->outstanding, 2) }}
+                        </span>
+                    @else
+                        <span class="text-success">
+                            ₹ 0.00
+                        </span>
+                    @endif
+                </td>
                 <td>
                     <a href="{{ route('customers.edit', $customer->id) }}" class="btn btn-sm btn-warning">
                         Edit

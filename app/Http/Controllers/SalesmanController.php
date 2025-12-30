@@ -86,9 +86,6 @@ class SalesmanController extends Controller
     {
         $salesmen = Beat::select('salesman')->distinct()->pluck('salesman');
         $beats = Beat::orderBy('name')->get();
-        $date = $request->filled('bill_date')
-            ? Carbon::parse($request->bill_date)->format('Y-m-d') 
-            : null;
 
         $partySaleIds = PartySale::whereExists(function ($query) {
             $query->select(DB::raw(1))
@@ -115,9 +112,6 @@ class SalesmanController extends Controller
             ->leftJoin('customers', 'party_sales.customer_id', '=', 'customers.id')
             ->joinSub($latestPayments, 'latest_payment', function ($join) {
                 $join->on('latest_payment.part_sale_id', '=', 'party_sales.id');
-            })
-            ->when($date, function ($q) use ($date) {
-                $q->whereDate('party_sales.bill_date', $date);
             })
             ->whereIn('party_sales.id', $partySaleIds) 
             ->orderBy('beats.salesman')
