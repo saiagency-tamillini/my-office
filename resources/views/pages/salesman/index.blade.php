@@ -100,21 +100,54 @@
     </table>
 </div>
 
+{{-- <script>
+    document.querySelectorAll('.toggle-beats').forEach(el => {
+        el.addEventListener('click', () => {
+            let salesmanId = el.closest('tr').dataset.salesman;
+            document.querySelectorAll('.beat-of-' + salesmanId)
+                .forEach(r => r.style.display = r.style.display === 'none' ? '' : 'none');
+        });
+    });
+
+    document.querySelectorAll('.toggle-customers').forEach(el => {
+        el.addEventListener('click', () => {
+            let beatId = el.closest('tr').dataset.beat;
+            document.querySelectorAll('.customer-of-' + beatId)
+                .forEach(r => r.style.display = r.style.display === 'none' ? '' : 'none');
+        });
+    });
+</script> --}}
 <script>
 document.querySelectorAll('.toggle-beats').forEach(el => {
     el.addEventListener('click', () => {
-        let salesmanId = el.closest('tr').dataset.salesman;
+
+        let salesmanRow = el.closest('tr');
+        let salesmanId = salesmanRow.dataset.salesman;
+
+        // Toggle beats
         document.querySelectorAll('.beat-of-' + salesmanId)
-            .forEach(r => r.style.display = r.style.display === 'none' ? '' : 'none');
+            .forEach(beatRow => {
+                const isHidden = beatRow.style.display === 'none';
+                beatRow.style.display = isHidden ? '' : 'none';
+
+                // 🔥 IMPORTANT: hide customers of this beat
+                let beatId = beatRow.dataset.beat;
+                document.querySelectorAll('.customer-of-' + beatId)
+                    .forEach(cust => cust.style.display = 'none');
+            });
     });
 });
 
 document.querySelectorAll('.toggle-customers').forEach(el => {
     el.addEventListener('click', () => {
         let beatId = el.closest('tr').dataset.beat;
+
         document.querySelectorAll('.customer-of-' + beatId)
-            .forEach(r => r.style.display = r.style.display === 'none' ? '' : 'none');
+            .forEach(r => {
+                r.style.display = r.style.display === 'none' ? '' : 'none';
+            });
     });
 });
 </script>
+
 @endsection
