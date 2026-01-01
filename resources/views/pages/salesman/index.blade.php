@@ -6,8 +6,8 @@
     .beat-row { background:#ffffff; }
     .customer-row { background:#fcfcfc; }
 
-    .indent-beat { padding-left: 30px; }
-    .indent-customer { padding-left: 60px; }
+    .indent-beat { padding-left: 30px; background:#e3bcff !important ; }
+    .indent-customer { padding-left: 60px; background:#b9ffc3 !important; }
 
     .clickable { cursor: pointer; color:#0d6efd; }
     .clickable:hover { text-decoration: underline; }
@@ -56,11 +56,11 @@
                 <tr class="beat-row beat-of-{{ $i }}" style="display:none" data-beat="{{ $beat->id }}">
                     <td></td>
                     <td class="indent-beat">
-                        <span class="clickable toggle-customers">
+                        <span class="clickable toggle-customers ms-4">
                             <i class="bi bi-diagram-3 toggle-icon"></i>{{ $beat->name }}
                         </span>
                     </td>
-                    <td></td>
+                    <td>{{$beat->customers_count ?? 0 }}</td>
                     <td>
                         <span class="badge {{ $beat->pending > 0 ? 'badge-pending' : 'badge-paid' }}">
                             {{ $beat->pending }}
@@ -73,8 +73,8 @@
                 @foreach($beat->customers as $customer)
                     <tr class="customer-row customer-of-{{ $beat->id }}" style="display:none">
                         <td></td>
-                        <td class="indent-customer">
-                            <i class="bi bi-person-circle toggle-icon"></i>{{ $customer->name }}
+                        <td class="indent-customer ms-3">
+                            <i class="bi bi-person-circle toggle-icon ms-5"></i>{{ $customer->name }}
                         </td>
                         <td></td>
                         <td>
