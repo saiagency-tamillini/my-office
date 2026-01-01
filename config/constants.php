@@ -2,7 +2,7 @@
 
 return [
     'beats' => [
-        'Manual'           => 'Anantha Raja',
+        'Manual'           => 'Manual',
         'AALAVAYAL'        => 'BALA',
         'ANNA SALAI'       => 'BALA',
         'BUSSTAND'         => 'SHRI MAHESHWARAN',
@@ -23,6 +23,33 @@ return [
         'PP-MAIN BAZAAR'   => 'ASHIK',
         'PUDUR'            => 'SHRI MAHESHWARAN',
         'UDB DUMMY BEAT'   => 'NO SALES MAN',
+        'VELANGUDI'        => 'NAGARAJ',
+    ],
+
+
+
+    'customers' => [
+        'Manual'           =>[ 'Anantha Raja'],
+        'AALAVAYAL'        =>[ 'BALA',],
+        'ANNA SALAI'       =>[ 'BALA',],
+        'BUSSTAND'         =>[ 'SHRI MAHESHWARAN',],
+        'DETS-LOCAL-FG'    =>[ 'NAGARAJ',],
+        'DETS-MAIN BAZAAR' =>[ 'ASHIK',],
+        'FNR-LOCAL-FG'     =>[ 'NAGARAJ',],
+        'FNR-MAIN BAZAAR'  =>[ 'ASHIK',],
+        'INDRA NAGAR'      =>[ 'SHRI MAHESHWARAN',],
+        'KARAIYUR'         =>[ 'BALA',],
+        'KONNAIYUR'        =>[ 'SHRI MAHESHWARAN',],
+        'KULIPIRAI'        =>[ 'SHRI MAHESHWARAN',],
+        'MELATHANIYAM'     =>[ 'BALA',],
+        'NACHANTHUPATTI'   =>[ 'ASHIK',],
+        'NATTUKAL(PMV)'    =>[ 'BALA',],
+        'PANAYAPATTI'      =>[ 'NAGARAJ',],
+        'POOLANKURICHI'    =>[ 'BALA',],
+        'PP-LOCAL-FG'      =>[ 'NAGARAJ',],
+        'PP-MAIN BAZAAR'   =>[ 'ASHIK',],
+        'PUDUR'            =>[ 'SHRI MAHESHWARAN',],
+        'UDB DUMMY BEAT'   =>[ 'NO SALES MAN',],
     ],
     'customers' => [
         'Manual'           =>[ 'Anantha Raja',],

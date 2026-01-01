@@ -7,7 +7,6 @@ use Illuminate\Database\Seeder;
 use App\Models\Beat;
 use App\Models\Customer;
 
-
 class CustomerSeeder extends Seeder
 {
     /**
@@ -27,7 +26,7 @@ class CustomerSeeder extends Seeder
                 Customer::updateOrCreate(
                     [
                         'name' => $customerName,
-                        'beat_id' => $beat->id,
+                        'beat_id' => $beat->id,     
                     ]
                 );
             }
