@@ -38,6 +38,9 @@
             <a class="nav-link" href="{{ route('salesman') }}">
                 <i class="bi bi-list-check"></i> Sales Man
             </a>
+            <a class="nav-link" href="{{ route('trip.report') }}">
+                <i class="bi bi-list-check"></i> Trip Sheet
+            </a>
         </div>
     </div>
 </nav>

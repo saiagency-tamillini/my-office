@@ -33,3 +33,6 @@ Route::get('sales-man', [SalesmanController::class, 'index'])->name('salesman');
 // Show payment entries for a salesman (POST request from button)
 Route::post('sales-man', [SalesmanController::class, 'salesManDetails'])->name('salesman.reports');
 
+Route::get('/trip-sheet', [fileController::CLASS, 'trip_sheet_report'])->name('trip.report');
+Route::get('/credit-details-popup', [fileController::class, 'credit_popup']);
+

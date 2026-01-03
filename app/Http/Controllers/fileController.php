@@ -19,7 +19,7 @@ use Carbon\Carbon;
 
 class fileController extends Controller
 {
-     public function file_upload (){return view('files.file_upload');}
+    public function file_upload (){return view('files.file_upload');}
 
     public function uploadExcel(Request $request)
     {
@@ -211,6 +211,106 @@ class fileController extends Controller
                 }
             }
         });
+    }
+
+    public function trip_sheet_report(Request $request){
+               // Get all salesmen for the filter checkboxes
+        $salesmen = Beat::select('salesman')->distinct()->pluck('salesman');
+        $beats = Beat::orderBy('name')->get();
+        $is_today_report = false;
+        $date = $request->filled('bill_date')
+            ? Carbon::parse($request->bill_date)->format('Y-m-d')
+            : Carbon::today()->format('Y-m-d');
+        if($date == Carbon::today()->format('Y-m-d')){
+            $is_today_report= true;
+        }
+        $query = PartySale::with('beat')
+            ->join('beats', 'party_sales.beat_id', '=', 'beats.id')
+             ->leftJoin('customers', 'party_sales.customer_id', '=', 'customers.id')
+            ->whereDate('party_sales.bill_date', $date)
+            ->orderBy('beats.salesman')
+            ->orderBy('party_sales.bill_date')
+            ->select('party_sales.*','customers.name as customer_name'); 
+
+        if ($request->filled('salesmen')) {
+            $query->whereIn('beats.salesman', $request->salesmen);
+        }
+
+        if ($request->has('sort') && in_array($request->sort, ['asc', 'desc'])) {
+            $query->orderBy('customer_name', $request->sort);
+        }
+        if ($request->filled('beat_id')) {
+            $query->where('party_sales.beat_id', $request->beat_id);
+        }
+        $sales = $query->get();
+        $customers = Customer::with('beat')->get();
+        $selectedBeat = null;
+        if ($request->filled('beat_id')) {
+            $selectedBeat = Beat::find($request->beat_id);
+        }
+        return view('pages.trip_report', compact('sales', 'salesmen', 'customers','beats','selectedBeat','is_today_report'));
+    }
+
+    public function credit_popup(Request $request)
+    {
+        $salesmen = Beat::select('salesman')->distinct()->pluck('salesman');
+        $beats = Beat::orderBy('name')->get();
+
+        $partySaleIds = PartySale::whereExists(function ($query) {
+            $query->select(DB::raw(1))
+                ->from('payment_entries as pe1')
+                ->whereColumn('pe1.part_sale_id', 'party_sales.id')
+                ->whereRaw('pe1.created_at = (
+                    SELECT MAX(pe2.created_at)
+                    FROM payment_entries pe2
+                    WHERE pe2.part_sale_id = pe1.part_sale_id
+                )')
+                ->where('pe1.status', 'pending');
+        })->pluck('id');
+        $latestPayments = DB::table('payment_entries as pe1')
+            ->select('pe1.*')
+            ->whereRaw('pe1.id = (
+                SELECT MAX(pe2.id)
+                FROM payment_entries pe2
+                WHERE pe2.part_sale_id = pe1.part_sale_id
+            )');
+
+        $query = PartySale::with('beat')
+            ->join('beats', 'party_sales.beat_id', '=', 'beats.id')
+            ->leftJoin('customers', 'party_sales.customer_id', '=', 'customers.id')
+            ->joinSub($latestPayments, 'latest_payment', function ($join) {
+                $join->on('latest_payment.part_sale_id', '=', 'party_sales.id');
+            })
+            ->whereIn('party_sales.id', $partySaleIds) 
+            ->orderBy('beats.salesman')
+            ->orderBy('party_sales.bill_date')
+            ->select(
+                'party_sales.*',
+                'customers.name as customer_name',
+                'latest_payment.amount_received as latest_amount_received',
+                'latest_payment.balance as latest_balance',
+                'latest_payment.payment_date as latest_payment_date',
+                'latest_payment.status as latest_status'
+            );
+
+        if ($request->filled('salesmen')) {
+            $query->whereIn('beats.salesman', $request->salesmen);
+        }
+
+        if ($request->has('sort') && in_array($request->sort, ['asc', 'desc'])) {
+            $query->orderBy('customer_name', $request->sort);
+        }
+
+        if ($request->filled('beat_id')) {
+            $query->where('party_sales.beat_id', $request->beat_id);
+        }
+
+        $sales = $query->get();
+
+        $customers = Customer::with('beat')->get();
+        $selectedBeat = $request->filled('beat_id') ? Beat::find($request->beat_id) : null;
+
+        return view('modals.credit_details', compact('sales', 'salesmen', 'customers','beats','selectedBeat'));
     }
 
 }
