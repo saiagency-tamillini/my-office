@@ -18,12 +18,12 @@ return [
         'NACHANTHUPATTI'   => 'ASHIK',
         'NATTUKAL(PMV)'    => 'BALA',
         'PANAYAPATTI'      => 'NAGARAJ',
-        'POOLANKURICHI'    => 'BALA',
+        'POOLANKURICHI'    => 'NAGARAJ',
         'PP-LOCAL-FG'      => 'NAGARAJ',
         'PP-MAIN BAZAAR'   => 'ASHIK',
         'PUDUR'            => 'SHRI MAHESHWARAN',
         'UDB DUMMY BEAT'   => 'NO SALES MAN',
-        'VELANGUDI'        => 'NAGARAJ',
+        'VELANGUDI'        => 'BALA',
     ],
 
 
@@ -84,6 +84,7 @@ return [
             'OM MURUGA MEDICAL',
             'Shri Arasumahan Medicals',
             'ANBUMANI MEDICALS',
+            'SAKTHI MEDICAL',
         ],
 
         'BUSSTAND' => [
@@ -107,6 +108,7 @@ return [
             'ANDIYAPPAN MALIGAI',
             'KURUNJI STORE',
             'SS GRAND SUPER MARKET',
+            'SRI PALANIANDAVAR MEDICAL',
         ],
 
         'NACHANTHUPATTI' => [
@@ -167,6 +169,14 @@ return [
             'Cinnaiyah Velar Maligai',
             'ANBU MALIGAI',
             'CHINNAIYA VELLAR MALIGAI',
+            'SR MALIGAI',
+            'MOHAN MALIGAI',
+            'MUTHU MALIGAI',
+            'SANTHOSH MEDICAL',
+            'SRI ANGARAKANNI MEDICALS',
+            'SRI ANGAYARKANNI MEDICALS',
+            'SRI MEENATCHI MEDICAL',
+            'ANBU MEDICAL',
         ],
 
         'VELANGUDI' => [
@@ -197,45 +207,6 @@ return [
             'SUBBIAH MEDICALS',
             'Surya Medicals',
         ],
-
-        // 'DETS-LOCAL-FG' => [
-        //     'CHANDRASEKAR MALIGAI 1',
-        //     'MODERN READYMADES',
-        //     'PRIYA  BAKERY',
-        //     'USHA LADIES CENTRE',
-        //     'Asma  MALIGAI',
-        //     'ANNAMALAI STORES',
-        //     'SRI KRISHNA BAKERY',
-        //     'T. R. Oil Store',
-        //     'SRI RAM MEDICAL',
-        //     'BAWA MEDICAL',
-        //     'SELVARAJ AGENCY',
-        //     'MANGALAM TRADERS',
-        //     'PALANI MALIGAI',
-        //     'INDIAN STORE',
-        //     'M.SAMI & Co',
-        //     'RAVICHANDRAN MALIGAI',
-        //     'NIZAM TRADERS',
-        //     'KAMACHI MALIGAI',
-        // ],
-
-        // 'DETS-MAIN BAZAAR' => [
-        //     'SRI PONNAIYAH MALIGAI',
-        //     'Anna Maligai',
-        //     'PRABU STORE',
-        //     'ABIRAMI  MEDICALS',
-        //     'ARASU MEDICALS',
-        //     'ANNAI MEDICAL',
-        //     'ANBU MEDICAL  MART',
-        //     'AATHIKALATHU ALANGARA MAALIGAI(PDKT)',
-        //     'JOTHY STORE',
-        //     'NIZAM STORE',
-        //     'Lucky Store',
-        //     'SRI  ABIRAMI  TRADERS',
-        //     'SIVMANI STORE',
-        //     'S.M.K STORES',
-        //     'SIVASAKTHI STORES',
-        // ],
 
         'KARAIYUR' => [
             'SNS Fancy',
@@ -462,6 +433,8 @@ return [
             'RAVICHANDRAN MALIGAI',
             'NIZAM TRADERS',
             'KAMACHI MALIGAI',
+            'SRI RAM MEDICAL',
+            'BAWA MEDICAL',
         ],
 
         'FNR-LOCAL-FG' => [
@@ -481,6 +454,8 @@ return [
             'RAVICHANDRAN MALIGAI',
             'NIZAM TRADERS',
             'KAMACHI MALIGAI',
+            'SRI RAM MEDICAL',
+            'BAWA MEDICAL',
         ],
 
         'PP-LOCAL-FG' => [
@@ -500,6 +475,8 @@ return [
             'RAVICHANDRAN MALIGAI',
             'NIZAM TRADERS',
             'KAMACHI MALIGAI',
+            'SRI RAM MEDICAL',
+            'BAWA MEDICAL',
         ],
 
         'DETS-MAIN BAZAAR' => [
