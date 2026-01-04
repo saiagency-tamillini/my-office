@@ -11,6 +11,7 @@
                 Credit Details
             </button>
         </div>
+        <form method="GET" action="{{ route('trip.report') }}" class="mb-3">
             <div class="mb-2">Filter by Salesman:</div>
             <div class="d-flex flex-wrap mb-2">
                 @foreach($salesmen as $salesman)
@@ -37,7 +38,7 @@
                 </select>
             </div>
             <button type="submit" class="btn btn-primary me-2">Filter</button>
-            <a href="{{ route('party-sales.index') }}" class="btn btn-secondary">Reset</a>
+            <a href="{{ route('trip.report') }}" class="btn btn-secondary">Reset</a>
         </form>
         @if($sales->isNotEmpty())
             <div class="mt-2">
@@ -71,7 +72,7 @@
                     <tr>
                         <th>S.No</th>
                         <th style="min-width: 280px;">
-                            <a href="{{ route('party-sales.index', array_merge(request()->all(), ['sort' => $sort])) }}">
+                            <a href="{{ route('trip.report', array_merge(request()->all(), ['sort' => $sort])) }}">
                                 Customer Name
                                 @if(request('sort') === 'asc') &#9650; @elseif(request('sort') === 'desc') &#9660; @endif
                             </a>

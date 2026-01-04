@@ -82,6 +82,9 @@ table td input[type="number"] {
     white-space: nowrap !important;
     text-align: center;
 }
+.h-fit{
+    height: fit-content !important;
+}
 @media print {
 
     /* A4 portrait page setup */

@@ -26,7 +26,7 @@
             <select name="customer_id" class="form-control">
                 @foreach($customers as $customer)
                     <option value="{{ $customer->id }}" {{ (isset($partySale) && $partySale->customer_id==$customer->id) ? 'selected' : '' }}>
-                        {{ $customer->name}}
+                        {{ $customer->name.' ('.$customer->beat->name.')'}}
                     </option>
                 @endforeach
             </select>

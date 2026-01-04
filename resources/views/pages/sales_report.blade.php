@@ -8,37 +8,39 @@
         <h2>Sales Man Report</h2>
 
         <form method="GET" action="{{ route('reportTable') }}" class="mb-3">
-            <div class="mb-2">
-                <label class="form-label">Bill Date:</label>
-                <input type="date"
-                    name="bill_date"
-                    class="form-control"
-                    value="{{ request('bill_date', \Carbon\Carbon::today()->format('Y-m-d')) }}">
-            </div>
-            <div class="mb-2">Filter by Salesman:</div>
-            <div class="d-flex flex-wrap mb-2">
-                @foreach($salesmen as $salesman)
-                    <div class="form-check me-3">
-                        <input class="form-check-input" type="checkbox" name="salesmen[]" 
-                            value="{{ $salesman }}" id="salesman_{{ $loop->index }}"
-                            {{ is_array(request('salesmen')) && in_array($salesman, request('salesmen')) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="salesman_{{ $loop->index }}">
-                            {{ $salesman }}
-                        </label>
-                    </div>
-                @endforeach
-            </div>
-            <div class="mb-2">
-                <label class="form-label">Filter by Beat:</label>
-                <select name="beat_id" class="form-select">
-                    <option value="">-- All Beats --</option>
-                    @foreach($beats as $beat)
-                        <option value="{{ $beat->id }}"
-                            {{ request('beat_id') == $beat->id ? 'selected' : '' }}>
-                            {{ $beat->name }}
-                        </option>
+            <div class="d-flex gap-5 ">
+                <div class="mb-2 d-flex h-fit gap-2 align-items-center">
+                    <label class="form-label mb-0 fw-bold">Bill Date:</label>
+                    <input type="date"
+                        name="bill_date"
+                        class="form-control w-auto"
+                        value="{{ request('bill_date', \Carbon\Carbon::today()->format('Y-m-d')) }}">
+                </div>
+                <div class="d-flex flex-wrap h-fit flex-column mb-2">
+                    <label class="fw-bold">Filter by Salesman:</label>
+                    @foreach($salesmen as $salesman)
+                        <div class="form-check me-3 cursor-pointer">
+                            <input class="form-check-input" type="checkbox" name="salesmen[]" 
+                                value="{{ $salesman }}" id="salesman_{{ $loop->index }}"
+                                {{ is_array(request('salesmen')) && in_array($salesman, request('salesmen')) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="salesman_{{ $loop->index }}">
+                                {{ $salesman }}
+                            </label>
+                        </div>
                     @endforeach
-                </select>
+                </div>
+                <div>
+                <label class="form-label fw-bold">Filter by Beat:</label>
+                    <select name="beat_id" class="form-select">
+                        <option value="">-- All Beats --</option>
+                        @foreach($beats as $beat)
+                            <option value="{{ $beat->id }}"
+                                {{ request('beat_id') == $beat->id ? 'selected' : '' }}>
+                                {{ $beat->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
             <button type="submit" class="btn btn-primary me-2">Filter</button>
             <a href="{{ route('reportTable') }}" class="btn btn-secondary">Reset</a>
