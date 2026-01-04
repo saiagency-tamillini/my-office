@@ -9,3 +9,13 @@
     font-weight: 600;
     background-color: rgba(13, 110, 253, 0.25); 
 }
+
+input[type="checkbox"],
+input[type="radio"],
+input[type="date"],
+input[type="file"],
+select.form-select,
+.form-check-label,
+.form-check-input {
+    cursor: pointer;
+}
