@@ -4,7 +4,11 @@
             <th>
                 <input type="checkbox" id="selectAllCredits">
             </th>
-            <th>Customer</th>
+            {{-- <th>Customer</th> --}}
+            <th id="customerSort" style="cursor:pointer;">
+                Customer
+                <span id="sortIcon">⬍</span>
+            </th>
             <th>Bill No</th>
             <th>Bill Date</th>
             <th>Balance</th>
