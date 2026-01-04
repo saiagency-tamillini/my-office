@@ -32,10 +32,10 @@
             </select>
         </div>
 
-        {{-- <div class="mb-3">
+        <div class="mb-3">
             <label>Bill No</label>
             <input type="text" name="bill_no" class="form-control" value="{{ $partySale->bill_no ?? old('bill_no') }}">
-        </div> --}}
+        </div>
 
         <div class="mb-3">
             <label>Bill Date</label>

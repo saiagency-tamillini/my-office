@@ -95,7 +95,8 @@ class PartySaleController extends Controller
         PartySale::create([
             'beat_id' => $manualBeat->id,
             'customer_id' => $request->customer_id,
-            'bill_no' => $bill_no,
+            // 'bill_no' => $bill_no,
+            'bill_no' =>  $request->bill_no,
             'bill_date' => $request->bill_date,
             'aging' => $request->aging,
             'amount' => $request->amount,
