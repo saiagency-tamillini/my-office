@@ -6,7 +6,12 @@
                 <h5 class="modal-title">Credit Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-
+            <div class="mb-2">
+                <input type="text"
+                    id="creditSearch"
+                    class="form-control"
+                    placeholder="Search by customer name...">
+            </div>
             <div class="modal-body">
                 <div id="creditModalBody">
                     <div class="text-center py-5">

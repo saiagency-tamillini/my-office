@@ -425,7 +425,42 @@
             document.getElementById('totalBalance').textContent = total.toFixed(2);
         }
     </script>
+    <script>
+        document.getElementById('creditSearch')?.addEventListener('input', function () {
+            const searchValue = this.value.toLowerCase();
+            document.querySelectorAll('#creditModal table tbody tr').forEach(row => {
+                const customer = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase();
+                row.style.display = customer.includes(searchValue) ? '' : 'none';
+            });
+        });
 
+        let sortDirection = 'asc';
 
+        document.addEventListener('click', function (e) {
 
+            if (e.target.closest('#customerSort')) {
+
+                const tbody = document.querySelector('#creditModal table tbody');
+                if (!tbody) return;
+
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                rows.sort((a, b) => {
+                    const nameA = a.querySelector('td:nth-child(2)').textContent.trim().toLowerCase();
+                    const nameB = b.querySelector('td:nth-child(2)').textContent.trim().toLowerCase();
+
+                    return sortDirection === 'asc'
+                        ? nameA.localeCompare(nameB)
+                        : nameB.localeCompare(nameA);
+                });
+
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+
+                const icon = document.getElementById('sortIcon');
+                if (icon) icon.textContent = sortDirection === 'asc' ? '⬆' : '⬇';
+
+                rows.forEach(row => tbody.appendChild(row));
+            }
+        });
+    </script>
 @endpush

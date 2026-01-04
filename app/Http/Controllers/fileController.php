@@ -214,7 +214,6 @@ class fileController extends Controller
     }
 
     public function trip_sheet_report(Request $request){
-               // Get all salesmen for the filter checkboxes
         $salesmen = Beat::select('salesman')->distinct()->pluck('salesman');
         $beats = Beat::orderBy('name')->get();
         $is_today_report = false;
