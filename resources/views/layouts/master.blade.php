@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-pO1F5Gtb3N/..." crossorigin="anonymous" referrerpolicy="no-referrer" />
-
+    <link rel="stylesheet" href="{{ asset('css/main.css') }}">
     @stack('styles')
 </head>
 <body>
@@ -16,31 +16,38 @@
     <div class="container">
         <a class="navbar-brand" href="/">Sai Agency</a>
         <div class="navbar-nav ms-auto">
-            <a class="navbar-brand" href="{{ route('home') }}">
-                <i class="bi bi-house-door-fill"></i> 
+            <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">
+                <i class="bi bi-house-door-fill"></i>
             </a>
-            <a class="nav-link" href="{{ route('fileUpload') }}">
+
+            <a class="nav-link {{ request()->routeIs('fileUpload') ? 'active' : '' }}" href="{{ route('fileUpload') }}">
                 <i class="bi bi-upload"></i> File Upload
             </a>
 
-            <a class="nav-link" href="{{ route('beats.index') }}">
+            <a class="nav-link {{ request()->routeIs('beats.*') ? 'active' : '' }}" href="{{ route('beats.index') }}">
                 <i class="bi bi-list-check"></i> Beats
             </a>
-            <a class="nav-link" href="{{ route('party-sales.index') }}">
+
+            <a class="nav-link {{ request()->routeIs('party-sales.*') ? 'active' : '' }}" href="{{ route('party-sales.index') }}">
                 <i class="bi bi-list-check"></i> Party Sales
             </a>
-            <a class="nav-link" href="{{ route('customers.index') }}">
+
+            <a class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}" href="{{ route('customers.index') }}">
                 <i class="bi bi-list-check"></i> Customers
             </a>
-            <a class="nav-link" href="{{ route('reportTable') }}">
+
+            <a class="nav-link {{ request()->routeIs('reportTable') ? 'active' : '' }}" href="{{ route('reportTable') }}">
                 <i class="bi bi-list-check"></i> Sales Report
             </a>
-            <a class="nav-link" href="{{ route('salesman') }}">
+
+            <a class="nav-link {{ request()->routeIs('salesman') ? 'active' : '' }}" href="{{ route('salesman') }}">
                 <i class="bi bi-list-check"></i> Sales Man
             </a>
-            <a class="nav-link" href="{{ route('trip.report') }}">
+
+            <a class="nav-link {{ request()->routeIs('trip.*') ? 'active' : '' }}" href="{{ route('trip.report') }}">
                 <i class="bi bi-list-check"></i> Trip Sheet
             </a>
+
         </div>
     </div>
 </nav>

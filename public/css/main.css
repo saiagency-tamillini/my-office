@@ -1,0 +1,11 @@
+.navbar .nav-link {
+    padding: 8px 14px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.navbar .nav-link.active {
+    color: #fff !important;
+    font-weight: 600;
+    background-color: rgba(13, 110, 253, 0.25); 
+}
