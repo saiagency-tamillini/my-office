@@ -125,10 +125,9 @@
                             <tr>
                                 <td>{{ $serial++ }}</td>
                                 <td class="customer-name">
-                                    <select name="sales[{{ $sale->id }}][customer_id]" class="form-control w-100"
-                                         {{ !$is_today_report && $sale->first_entry  ? 'disabled' : '' }}>
+                                    <select name="sales[{{ $sale->id }}][customer_id]" class="form-control w-100 customer-select">
                                         @foreach($customers as $customer)
-                                            <option value="{{ $customer->id }}" 
+                                            <option value="{{ $customer->id }}"
                                                 {{ $sale->customer_id == $customer->id ? 'selected' : '' }}>
                                                 {{ $customer->name }} ({{ $customer->beat->name ?? 'No Beat' }})
                                             </option>
@@ -396,6 +395,15 @@
                     const input = td.querySelector('input, select');
                     if (input) input.focus();
                 });
+            });
+        });
+        $(document).on('focus', '.customer-select', function () {
+            if ($(this).hasClass('select2-hidden-accessible')) return;
+
+            $(this).select2({
+                width: '100%',
+                placeholder: 'Type to search customer...',
+                allowClear: false
             });
         });
     </script>
