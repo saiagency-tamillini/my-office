@@ -22,14 +22,40 @@
                         <div class="d-flex gap-5 flex-wrap">
 
                             <!-- Bill Date -->
-                            <div class="mb-2 d-flex h-fit gap-2 align-items-center">
-                                <label class="form-label mb-0 fw-bold">Bill Date:</label>
-                                <input type="date"
+                            {{-- <div class="mb-2 d-flex h-fit gap-2 align-items-center">
+                                <label class="form-label">Bill Date:</label>
+                                <input
+                                    type="date"
                                     name="bill_date"
                                     class="form-control w-auto"
-                                    value="{{ request('bill_date', \Carbon\Carbon::today()->format('Y-m-d')) }}"
+                                    value="{{ request('bill_date') }}"
                                     onclick="this.showPicker()"
                                     onfocus="this.showPicker()">
+                            </div> --}}
+
+                            <!-- Date Range -->
+                            <div class="mb-2 d-flex h-fit gap-2 align-items-center flex-wrap">
+                                <label class="form-label fw-bold mb-0">Bill Date:</label>
+
+                                <input
+                                    type="date"
+                                    name="from_date"
+                                    class="form-control w-auto"
+                                    value="{{ request('from_date') }}"
+                                    onclick="this.showPicker()"
+                                    onfocus="this.showPicker()"
+                                    placeholder="From">
+
+                                <span class="fw-bold">to</span>
+
+                                <input
+                                    type="date"
+                                    name="to_date"
+                                    class="form-control w-auto"
+                                    value="{{ request('to_date') }}"
+                                    onclick="this.showPicker()"
+                                    onfocus="this.showPicker()"
+                                    placeholder="To">
                             </div>
 
                             <!-- Salesman -->
@@ -73,9 +99,9 @@
             </div>
         </div>
 
-        <a href="{{ route('party-sales.create') }}" class="btn btn-primary mb-3">Add New</a>
+        {{-- <a href="{{ route('party-sales.create') }}" class="btn btn-primary mb-3">Add New</a> --}}
         @if($sales->isNotEmpty())
-            <a href="{{ route('party-sales.download', request()->all()) }}" class="btn btn-success mb-3">Download Excel</a>
+            <a href="{{ route('sales-report.download', request()->all()) }}" class="btn btn-success mb-3">Download Excel</a>
             <button type="button" class="btn btn-info mb-3" onclick="printPage()">Print</button>
         @endif
 
@@ -340,13 +366,6 @@
         }
 
         function printPage() {
-            // const printContents = document.getElementById('printArea').innerHTML;
-            // const originalContents = document.body.innerHTML;
-
-            // document.body.innerHTML = printContents;
-            // window.print();
-            // document.body.innerHTML = originalContents;
-            // location.reload();
             window.print();
         }
 
