@@ -152,7 +152,7 @@
                                         value="{{ $sale->cd }}"
                                         max="{{ $sale->amount }}"
                                         oninput="validateMax(this, {{ $sale->balance }}); updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{  $sale->first_entry ? 'readonly' : '' }}>
+                                        {{  $sale->first_entry ? 'disabled' : '' }}>
                                 </td>
                                 <td>
                                     <input type="number" class="form-control"
@@ -160,21 +160,21 @@
                                         value="{{ $sale->product_return }}"
                                         max="{{ $sale->amount }}"
                                         oninput="validateMax(this, {{ $sale->balance }}); updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{ $sale->first_entry? 'readonly' : '' }}>
+                                        {{ $sale->first_entry? 'disabled' : '' }}>
                                 </td>
                                 <td>
                                     <input type="number" class="form-control"
                                         name="sales[{{ $sale->id }}][online_payment]"
                                         value="{{ $sale->online_payment }}"
                                         oninput="updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{ $sale->first_entry? 'readonly' : '' }}>
+                                        {{ $sale->first_entry? 'disabled' : '' }}>
                                 </td>
                                 <td>
                                     <input type="number" class="form-control"
                                         name="sales[{{ $sale->id }}][amount_received]"
                                         value="{{ $sale->amount_received }}"
                                         oninput="updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{ $sale->first_entry? 'readonly' : '' }}>
+                                        {{ $sale->first_entry? 'disabled' : '' }}>
                                 </td>
                                 <td class="hide-print">
                                     <input type="number" class="form-control balance" 
@@ -183,7 +183,7 @@
                                         name="sales[{{ $sale->id }}][balance]"
                                         data-amount="{{ $sale->balance }}"
                                         value="{{ $sale->balance }}" 
-                                        readonly>
+                                        disabled>
                                 </td>
                                 <td class="hide-print">{{ $sale->beat->name }}</td>
                                 <td class="hide-print">{{ $sale->remarks }}</td>
