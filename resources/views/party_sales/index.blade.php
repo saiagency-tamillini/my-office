@@ -125,10 +125,9 @@
                             <tr>
                                 <td>{{ $serial++ }}</td>
                                 <td class="customer-name">
-                                    <select name="sales[{{ $sale->id }}][customer_id]" class="form-control w-100"
-                                         {{ !$is_today_report && $sale->first_entry  ? 'disabled' : '' }}>
+                                    <select name="sales[{{ $sale->id }}][customer_id]" class="form-control w-100 customer-select">
                                         @foreach($customers as $customer)
-                                            <option value="{{ $customer->id }}" 
+                                            <option value="{{ $customer->id }}"
                                                 {{ $sale->customer_id == $customer->id ? 'selected' : '' }}>
                                                 {{ $customer->name }} ({{ $customer->beat->name ?? 'No Beat' }})
                                             </option>
@@ -152,7 +151,7 @@
                                         value="{{ $sale->cd }}"
                                         max="{{ $sale->amount }}"
                                         oninput="validateMax(this, {{ $sale->balance }}); updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{  $sale->first_entry ? 'readonly' : '' }}>
+                                        {{  $sale->first_entry ? 'disabled' : '' }}>
                                 </td>
                                 <td>
                                     <input type="number" class="form-control"
@@ -160,21 +159,21 @@
                                         value="{{ $sale->product_return }}"
                                         max="{{ $sale->amount }}"
                                         oninput="validateMax(this, {{ $sale->balance }}); updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{ $sale->first_entry? 'readonly' : '' }}>
+                                        {{ $sale->first_entry? 'disabled' : '' }}>
                                 </td>
                                 <td>
                                     <input type="number" class="form-control"
                                         name="sales[{{ $sale->id }}][online_payment]"
                                         value="{{ $sale->online_payment }}"
                                         oninput="updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{ $sale->first_entry? 'readonly' : '' }}>
+                                        {{ $sale->first_entry? 'disabled' : '' }}>
                                 </td>
                                 <td>
                                     <input type="number" class="form-control"
                                         name="sales[{{ $sale->id }}][amount_received]"
                                         value="{{ $sale->amount_received }}"
                                         oninput="updateBalance({{ $sale->id }}, {{ $sale->balance }})"
-                                        {{ $sale->first_entry? 'readonly' : '' }}>
+                                        {{ $sale->first_entry? 'disabled' : '' }}>
                                 </td>
                                 <td class="hide-print">
                                     <input type="number" class="form-control balance" 
@@ -183,7 +182,7 @@
                                         name="sales[{{ $sale->id }}][balance]"
                                         data-amount="{{ $sale->balance }}"
                                         value="{{ $sale->balance }}" 
-                                        readonly>
+                                        disabled>
                                 </td>
                                 <td class="hide-print">{{ $sale->beat->name }}</td>
                                 <td class="hide-print">{{ $sale->remarks }}</td>
@@ -396,6 +395,15 @@
                     const input = td.querySelector('input, select');
                     if (input) input.focus();
                 });
+            });
+        });
+        $(document).on('focus', '.customer-select', function () {
+            if ($(this).hasClass('select2-hidden-accessible')) return;
+
+            $(this).select2({
+                width: '100%',
+                placeholder: 'Type to search customer...',
+                allowClear: false
             });
         });
     </script>

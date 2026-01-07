@@ -9,6 +9,11 @@ use App\Models\Beat;
 use App\Models\Customer;
 use App\Models\PaymentEntry;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Illuminate\Support\Facades\Response;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class SalesmanController extends Controller
 {
@@ -87,61 +92,160 @@ class SalesmanController extends Controller
         $salesmen = Beat::select('salesman')->distinct()->pluck('salesman');
         $beats = Beat::orderBy('name')->get();
 
-        $partySaleIds = PartySale::whereExists(function ($query) {
-            $query->select(DB::raw(1))
-                ->from('payment_entries as pe1')
-                ->whereColumn('pe1.part_sale_id', 'party_sales.id')
-                ->whereRaw('pe1.created_at = (
-                    SELECT MAX(pe2.created_at)
-                    FROM payment_entries pe2
-                    WHERE pe2.part_sale_id = pe1.part_sale_id
-                )')
-                ->where('pe1.status', 'pending');
-        })
-        ->pluck('id');
-        $latestPayments = DB::table('payment_entries as pe1')
-            ->select('pe1.*')
-            ->whereRaw('pe1.id = (
-                SELECT MAX(pe2.id)
-                FROM payment_entries pe2
-                WHERE pe2.part_sale_id = pe1.part_sale_id
-            )');
+        // $partySaleIds = PartySale::whereExists(function ($query) {
+        //     $query->select(DB::raw(1))
+        //         ->from('payment_entries as pe1')
+        //         ->whereColumn('pe1.part_sale_id', 'party_sales.id')
+        //         ->whereRaw('pe1.created_at = (
+        //             SELECT MAX(pe2.created_at)
+        //             FROM payment_entries pe2
+        //             WHERE pe2.part_sale_id = pe1.part_sale_id
+        //         )')
+        //         ->where('pe1.status', 'pending');
+        // })
+        // ->pluck('id');
+        // $latestPayments = DB::table('payment_entries as pe1')
+        //     ->select('pe1.*')
+        //     ->whereRaw('pe1.id = (
+        //         SELECT MAX(pe2.id)
+        //         FROM payment_entries pe2
+        //         WHERE pe2.part_sale_id = pe1.part_sale_id
+        //     )');
 
-        $query = PartySale::with('beat')
-            ->join('beats', 'party_sales.beat_id', '=', 'beats.id')
-            ->leftJoin('customers', 'party_sales.customer_id', '=', 'customers.id')
-            ->joinSub($latestPayments, 'latest_payment', function ($join) {
-                $join->on('latest_payment.part_sale_id', '=', 'party_sales.id');
-            })
-            ->whereIn('party_sales.id', $partySaleIds) 
-            ->orderBy('beats.salesman')
-            ->orderBy('party_sales.bill_date')
-            ->select(
-                'party_sales.*',
-                'customers.name as customer_name',
-                'latest_payment.amount_received as latest_amount_received',
-                'latest_payment.balance as latest_balance',
-                'latest_payment.payment_date as latest_payment_date',
-                'latest_payment.status as latest_status'
-            );
+        // $query = PartySale::with('beat')
+        //     ->join('beats', 'party_sales.beat_id', '=', 'beats.id')
+        //     ->leftJoin('customers', 'party_sales.customer_id', '=', 'customers.id')
+        //     ->joinSub($latestPayments, 'latest_payment', function ($join) {
+        //         $join->on('latest_payment.part_sale_id', '=', 'party_sales.id');
+        //     })
+        //     ->whereIn('party_sales.id', $partySaleIds) 
+        //     ->orderBy('beats.salesman')
+        //     ->orderBy('party_sales.bill_date')
+        //     ->select(
+        //         'party_sales.*',
+        //         'customers.name as customer_name',
+        //         'latest_payment.amount_received as latest_amount_received',
+        //         'latest_payment.balance as latest_balance',
+        //         'latest_payment.payment_date as latest_payment_date',
+        //         'latest_payment.status as latest_status'
+        //     );
+        // // if ($request->filled('bill_date')) {
+        // //     $date =  Carbon::parse($request->bill_date)->format('Y-m-d');
+        // //     $query->whereDate('party_sales.bill_date', $date);
+        // // }
+        // if ($request->filled('from_date') && $request->filled('to_date')) {
+        //     $from = Carbon::parse($request->from_date)->startOfDay();
+        //     $to   = Carbon::parse($request->to_date)->endOfDay();
 
-        if ($request->filled('salesmen')) {
-            $query->whereIn('beats.salesman', $request->salesmen);
-        }
+        //     $query->whereBetween('party_sales.bill_date', [$from, $to]);
+        // } elseif ($request->filled('from_date')) {
+        //     $from = Carbon::parse($request->from_date)->startOfDay();
+        //     $query->where('party_sales.bill_date', '>=', $from);
+        // } elseif ($request->filled('to_date')) {
+        //     $to = Carbon::parse($request->to_date)->endOfDay();
+        //     $query->where('party_sales.bill_date', '<=', $to);
+        // }
 
-        if ($request->has('sort') && in_array($request->sort, ['asc', 'desc'])) {
-            $query->orderBy('customer_name', $request->sort);
-        }
+        // if ($request->filled('salesmen')) {
+        //     $query->whereIn('beats.salesman', $request->salesmen);
+        // }
 
-        if ($request->filled('beat_id')) {
-            $query->where('party_sales.beat_id', $request->beat_id);
-        }
+        // if ($request->has('sort') && in_array($request->sort, ['asc', 'desc'])) {
+        //     $query->orderBy('customer_name', $request->sort);
+        // }
 
+        // if ($request->filled('beat_id')) {
+        //     $query->where('party_sales.beat_id', $request->beat_id);
+        // }
+
+        $query = $this->buildReportQuery($request);
         $sales = $query->get();
-
         $customers = Customer::with('beat')->get();
         $selectedBeat = $request->filled('beat_id') ? Beat::find($request->beat_id) : null;
         return view('pages.sales_report', compact('sales', 'salesmen', 'customers','beats','selectedBeat'));
+    }
+
+    public function downloadReport(Request $request)
+    {
+        $sales = $this->buildReportQuery($request)->get();
+
+        
+        // Group by salesman (same as your existing approach)
+        $grouped = $sales->groupBy(function ($item) {
+            return optional($item->beat)->salesman ?? 'Unknown';
+        });
+
+        // Excel
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $headers = [
+            'S.No',
+            'Customer Name',
+            'Bill No',
+            'Bill Date',
+            'Aging (days)',
+            'Amount',
+            'CD',
+            'Product Return',
+            'Online Payment',
+            'Amount Received',
+            'Balance',
+            'Beat'
+        ];
+
+        $sheet->fromArray($headers, null, 'A1');
+
+        $rowNo = 2;
+
+        foreach ($grouped as $salesman => $salesGroup) {
+
+            // Salesman header row
+            $sheet->mergeCells("A{$rowNo}:L{$rowNo}");
+            $sheet->setCellValue("A{$rowNo}", $salesman);
+
+            $sheet->getStyle("A{$rowNo}:L{$rowNo}")->applyFromArray([
+                'font' => ['bold' => true],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => 'A3A1A1'],
+                ],
+            ]);
+
+            $rowNo++;
+            $serial = 1;
+
+            foreach ($salesGroup as $sale) {
+                $aging = $sale->bill_date
+                    ? Carbon::parse($sale->bill_date)->diffInDays(Carbon::today(), false)
+                    : 0;
+
+                $sheet->fromArray([
+                    $serial++,
+                    optional($sale->customer)->name ?? '',
+                    $sale->bill_no,
+                    $sale->bill_date ? Carbon::parse($sale->bill_date)->format('d-m-Y') : '',
+                    $aging,
+                    $sale->amount,
+                    $sale->cd,
+                    $sale->product_return,
+                    $sale->online_payment,
+                    $sale->latest_amount_received ?? '',
+                    $sale->latest_balance?? '',
+                    optional($sale->beat)->name ?? '',
+                ], null, "A{$rowNo}");
+
+                $rowNo++;
+            }
+        }
+
+        $writer = new Xlsx($spreadsheet);
+
+        return Response::streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, 'Sales_Man_Report.xlsx');
+            // return Excel::download(new SalesReportExport($sales), 'sales_report.xlsx');
     }
 
     public function bulkSaleUpdate(Request $request)
@@ -227,5 +331,76 @@ class SalesmanController extends Controller
         $paymentEntries = $pendingBills->merge($completedBills);
         return view('pages.salesman.details', compact('customer', 'paymentEntries'));
     }
+
+    private function buildReportQuery(Request $request)
+    {
+        $partySaleIds = PartySale::whereExists(function ($query) {
+            $query->select(DB::raw(1))
+                ->from('payment_entries as pe1')
+                ->whereColumn('pe1.part_sale_id', 'party_sales.id')
+                ->whereRaw('pe1.created_at = (
+                    SELECT MAX(pe2.created_at)
+                    FROM payment_entries pe2
+                    WHERE pe2.part_sale_id = pe1.part_sale_id
+                )')
+                ->where('pe1.status', 'pending');
+        })->pluck('id');
+
+        $latestPayments = DB::table('payment_entries as pe1')
+            ->select('pe1.*')
+            ->whereRaw('pe1.id = (
+                SELECT MAX(pe2.id)
+                FROM payment_entries pe2
+                WHERE pe2.part_sale_id = pe1.part_sale_id
+            )');
+
+        $query = PartySale::with('beat')
+            ->join('beats', 'party_sales.beat_id', '=', 'beats.id')
+            ->leftJoin('customers', 'party_sales.customer_id', '=', 'customers.id')
+            ->joinSub($latestPayments, 'latest_payment', function ($join) {
+                $join->on('latest_payment.part_sale_id', '=', 'party_sales.id');
+            })
+            ->whereIn('party_sales.id', $partySaleIds)
+            ->select(
+                'party_sales.*',
+                'customers.name as customer_name',
+                'latest_payment.amount_received as latest_amount_received',
+                'latest_payment.balance as latest_balance',
+                'latest_payment.payment_date as latest_payment_date',
+                'latest_payment.status as latest_status'
+            );
+
+        // Date filters
+        if ($request->filled('from_date') && $request->filled('to_date')) {
+            $from = Carbon::parse($request->from_date)->startOfDay();
+            $to   = Carbon::parse($request->to_date)->endOfDay();
+            $query->whereBetween('party_sales.bill_date', [$from, $to]);
+        } elseif ($request->filled('from_date')) {
+            $from = Carbon::parse($request->from_date)->startOfDay();
+            $query->where('party_sales.bill_date', '>=', $from);
+        } elseif ($request->filled('to_date')) {
+            $to = Carbon::parse($request->to_date)->endOfDay();
+            $query->where('party_sales.bill_date', '<=', $to);
+        }
+
+        // Salesman filter
+        if ($request->filled('salesmen')) {
+            $query->whereIn('beats.salesman', $request->salesmen);
+        }
+
+        // Beat filter
+        if ($request->filled('beat_id')) {
+            $query->where('party_sales.beat_id', $request->beat_id);
+        }
+
+        // Sorting
+        $query->orderBy('beats.salesman')->orderBy('party_sales.bill_date');
+        if ($request->has('sort') && in_array($request->sort, ['asc', 'desc'])) {
+            $query->orderBy('customer_name', $request->sort);
+        }
+
+        return $query;
+    }
+
 }
 

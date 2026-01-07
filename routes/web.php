@@ -29,6 +29,7 @@ Route::get('/customers/{customer}/transactions', [CustomerController::class, 'tr
 
 // Show salesman table page
 Route::get('sales-man', [SalesmanController::class, 'index'])->name('salesman');
+Route::get('/sales-report/download', [SalesmanController::class, 'downloadReport'])->name('sales-report.download');
 
 // Show payment entries for a salesman (POST request from button)
 Route::post('sales-man', [SalesmanController::class, 'salesManDetails'])->name('salesman.reports');
