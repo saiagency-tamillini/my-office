@@ -1,13 +1,20 @@
 .navbar .nav-link {
-    padding: 8px 14px;
-    border-radius: 6px;
+    /* padding: 8px 14px; */
+    padding: 0px !important;
+    /* border-radius: 6px; */
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .navbar .nav-link.active {
     color: #fff !important;
     font-weight: 600;
-    background-color: rgba(13, 110, 253, 0.25); 
+    background-color: rgb(57 21 234 / 85%);
+    border-radius: 10px;
+    padding: 5px !important;
+}
+.navbar .navbar-nav {
+    display: flex;
+    gap: 10px;
 }
 
 input[type="checkbox"],
@@ -18,4 +25,69 @@ select.form-select,
 .form-check-label,
 .form-check-input {
     cursor: pointer;
+}
+@media print {
+
+    /* A4 portrait page setup */
+    @page {
+        size: A4 portrait;
+        margin: 15mm;
+    }
+    body {
+        font-size: 12px;
+        color: #000;
+    }
+    body * {
+        visibility: hidden;
+    }
+    #printArea,
+    #printArea * {
+        visibility: visible;
+    }
+     #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    button,
+    .btn,
+    .icon-btn,
+    .form-control,
+    input,
+    select {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        appearance: none;
+        pointer-events: none;
+    }
+
+    /* Table styling */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid #000 !important;
+        padding: 5px;
+        font-size: 11px;
+        vertical-align: middle;
+    }
+
+    th {
+        background-color: #f2f2f2 !important;
+        font-weight: bold;
+        text-align: center;
+    }
+    tr[style*="font-weight:bold"] td {
+        background-color: #ddd !important;
+        text-align: center;
+        font-size: 12px;
+    }
+    .hide-print {
+        display: none !important;
+    }
+
 }

@@ -1,0 +1,106 @@
+svg.w-5.h-5 { 
+    width: 16px !important;
+    height: 16px !important; 
+}
+@media print {
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+  }
+
+  .container, .container-fluid {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .py-4, .pt-4, .mt-3, .mt-4, .mb-3, .mb-4 {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  .card, .card-header, .card-body {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .container, .card, .card-body, .table-responsive {
+    position: static !important;
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+  }
+
+  .table-responsive {
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  thead { display: table-header-group; }
+  tfoot { display: table-row-group !important; }
+  tr { page-break-inside: avoid; }
+  tr { break-inside: avoid !important; page-break-inside: avoid !important; }
+}
+
+/* @media print {
+
+  @page { size: A4 portrait; margin: 12mm; }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body * { visibility: hidden !important; }
+
+  #printArea, #printArea * {
+    visibility: visible !important;
+  }
+
+ 
+  .container, .card, .card-body, .table-responsive {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+.container, .card, .card-body, .table-responsive {
+    position: static !important;
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+  }
+
+  th, td {
+    border: 1px solid #000 !important;
+    padding: 4px !important;
+    font-size: 10px !important;
+    word-wrap: break-word !important;
+  }
+
+  th {
+    background: #f2f2f2 !important;
+    font-weight: bold !important;
+    text-align: center !important;
+  }
+
+  thead { display: table-header-group !important; }
+
+  tfoot { display: table-row-group !important; }
+
+  tr { page-break-inside: avoid !important; break-inside: avoid !important; }
+
+  .hide-print { display: none !important; }
+} */
+

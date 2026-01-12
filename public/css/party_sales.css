@@ -88,7 +88,7 @@ table td input[type="number"] {
 @media print {
 
     /* A4 portrait page setup */
-    @page {
+    /* @page {
         size: A4 portrait;
         margin: 15mm;
     }
@@ -98,7 +98,6 @@ table td input[type="number"] {
         color: #000;
     }
 
-    /* Hide everything except print area */
     body * {
         visibility: hidden;
     }
@@ -114,7 +113,6 @@ table td input[type="number"] {
         top: 0;
         width: 100%;
     }
-    /* Hide buttons, inputs, selects UI */
     button,
     .btn,
     .icon-btn,
@@ -128,7 +126,6 @@ table td input[type="number"] {
         pointer-events: none;
     }
 
-    /* Table styling */
     table {
         width: 100%;
         border-collapse: collapse;
@@ -146,18 +143,17 @@ table td input[type="number"] {
         font-weight: bold;
         text-align: center;
     }
-
-    /* Hide search bar */
-    #customerSearch {
-        display: none !important;
-    }
-
-    /* Salesman header row */
     tr[style*="font-weight:bold"] td {
         background-color: #ddd !important;
         text-align: center;
         font-size: 12px;
+    } */
+
+    #customerSearch {
+        display: none !important;
     }
+
+
 
     /* Prevent row breaking */
     /* tr {
@@ -200,9 +196,9 @@ table td input[type="number"] {
         font-size: 11px;
         padding: 4px;
     }
-    .hide-print {
+    /* .hide-print {
         display: none !important;
-    }
+    } */
     .print-beat-heading {
         display: block;
         margin-bottom: 15px;

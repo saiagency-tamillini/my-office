@@ -19,9 +19,9 @@
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
+    <div class="container p-0">
         <a class="navbar-brand" href="/">Sai Agency</a>
-        <div class="navbar-nav ms-auto">
+        <div class="navbar-nav">
             <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">
                 <i class="bi bi-house-door-fill"></i>
             </a>
@@ -54,12 +54,16 @@
                 <i class="bi bi-list-check"></i> Trip Sheet
             </a>
 
+            <a class="nav-link {{ request()->routeIs('collections.*') ? 'active' : '' }}" href="{{ route('collections.index') }}">
+                <i class="bi bi-list-check"></i> Collection
+            </a>
+
         </div>
     </div>
 </nav>
 
 
-<div class="container mt-4 ms-0">
+<div class="mt-4 ms-0 w-100">
     @yield('content')
 </div>
 

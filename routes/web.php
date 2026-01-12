@@ -6,6 +6,7 @@ use App\Http\Controllers\BeatController;
 use App\Http\Controllers\PartySaleController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SalesmanController;
+use App\Http\Controllers\CollectionController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -36,4 +37,8 @@ Route::post('sales-man', [SalesmanController::class, 'salesManDetails'])->name('
 
 Route::get('/trip-sheet', [fileController::CLASS, 'trip_sheet_report'])->name('trip.report');
 Route::get('/credit-details-popup', [fileController::class, 'credit_popup']);
+
+Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
+Route::get('/collections/download', [CollectionController::class, 'download'])->name('collections.download');
+
 
