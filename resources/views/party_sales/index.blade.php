@@ -57,6 +57,9 @@
             <div class="col-md-4">
                 <input type="text" id="customerSearch" class="form-control" placeholder="Search by Customer Name...">
             </div>
+            <div class="col-md-4">
+                <input type="text" id="billNoSearch" class="form-control" placeholder="Search by Bill No...">
+            </div>
         </div>
 
         @php
@@ -137,7 +140,7 @@
                                         <span class="badge bg-success ms-2">Modified</span>
                                     @endif
                                 </td>
-                                <td>{{ $sale->bill_no }}</td>
+                                <td class="bill-no">{{ $sale->bill_no }}</td>
                                 <td class="date-col">{{ $sale->bill_date ? \Carbon\Carbon::parse($sale->bill_date)->format('d-m-Y') : '' }}
                                     <input type="hidden"
                                         name="sales[{{ $sale->id }}][bill_date]"
@@ -231,13 +234,6 @@
 @endsection
 @push('scripts')
     <script>
-        // document.addEventListener('DOMContentLoaded', function() {
-        //     document.querySelectorAll('.balance').forEach(balanceInput => {
-        //         const saleId = balanceInput.id.split('-')[1];                
-        //         const amount = parseFloat(balanceInput.dataset.amount);                
-        //         updateBalance(saleId, amount);
-        //     });
-        // });
         function deleteSale(id) {
             if (!confirm('Are you sure you want to delete this record?')) return;
 
@@ -365,25 +361,32 @@
         document.addEventListener('DOMContentLoaded', function () {
             const searchInput = document.getElementById('customerSearch');
             const rows = document.querySelectorAll('tbody tr');
-            searchInput.addEventListener('keyup', function () {
-                const searchValue = this.value.toLowerCase();
+            const billNoSearch = document.getElementById('billNoSearch');
+            function filterRows() {
+                const customerValue = customerSearch.value.toLowerCase();
+                const billValue = billNoSearch.value.toLowerCase();
+
                 rows.forEach(row => {
                     const customerCell = row.querySelector('.customer-name');
+                    const billCell = row.querySelector('.bill-no');
 
-                    if (!customerCell) return;
+                    if (!customerCell || !billCell) return;
 
-                    const select  = customerCell.querySelector('select[name*="[customer_id]"]');
-                    if (!select ) return;
-                    
-                    const customerName = select.options[select.selectedIndex].text.toLowerCase();
-                    
-                    if (customerName.includes(searchValue)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
+                    const select = customerCell.querySelector('select');
+                    const customerName = select
+                        ? select.options[select.selectedIndex].text.toLowerCase()
+                        : '';
+
+                    const billNo = billCell.textContent.toLowerCase();
+
+                    const customerMatch = customerName.includes(customerValue);
+                    const billMatch = billNo.includes(billValue);
+
+                    row.style.display = (customerMatch && billMatch) ? '' : 'none';
                 });
-            });
+            }
+            customerSearch.addEventListener('keyup', filterRows);
+            billNoSearch.addEventListener('keyup', filterRows);
             document.querySelectorAll('table input[type="number"]').forEach(input => {
                 input.addEventListener('input', () => {
                     const length = input.value.length;
