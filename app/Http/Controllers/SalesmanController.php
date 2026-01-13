@@ -199,7 +199,6 @@ class SalesmanController extends Controller
         $rowNo = 2;
 
         foreach ($grouped as $salesman => $salesGroup) {
-
             // Salesman header row
             $sheet->mergeCells("A{$rowNo}:L{$rowNo}");
             $sheet->setCellValue("A{$rowNo}", $salesman);
@@ -231,7 +230,8 @@ class SalesmanController extends Controller
                     $sale->cd,
                     $sale->product_return,
                     $sale->online_payment,
-                    $sale->latest_amount_received ?? '',
+                    '',
+                    // $sale->latest_amount_received ?? '',
                     $sale->latest_balance?? '',
                     optional($sale->beat)->name ?? '',
                 ], null, "A{$rowNo}");

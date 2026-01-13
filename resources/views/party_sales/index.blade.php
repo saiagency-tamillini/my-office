@@ -161,28 +161,28 @@
                                         oninput="validateMax(this, {{ $sale->balance }}); updateBalance({{ $sale->id }}, {{ $sale->balance }})"
                                         {{ $sale->first_entry? 'disabled' : '' }}>
                                 </td>
-                                <td>
+                                <td class="amount-col">
                                     <input type="number" class="form-control"
                                         name="sales[{{ $sale->id }}][online_payment]"
                                         value="{{ $sale->online_payment }}"
                                         oninput="updateBalance({{ $sale->id }}, {{ $sale->balance }})"
                                         {{ $sale->first_entry? 'disabled' : '' }}>
                                 </td>
-                                <td>
+                                <td class="amount-col">
                                     <input type="number" class="form-control"
                                         name="sales[{{ $sale->id }}][amount_received]"
                                         value="{{ $sale->amount_received }}"
                                         oninput="updateBalance({{ $sale->id }}, {{ $sale->balance }})"
                                         {{ $sale->first_entry? 'disabled' : '' }}>
                                 </td>
-                                <td class="hide-print">
-                                    <input type="number" class="form-control balance" 
+                                <td class="hide-print balance-col">
+                                    <input type="number" class="form-control" 
                                         style="width: 100px;" 
                                         id="balance-{{ $sale->id }}" 
                                         name="sales[{{ $sale->id }}][balance]"
                                         data-amount="{{ $sale->balance }}"
                                         value="{{ $sale->balance }}" 
-                                        disabled>
+                                        {{ $sale->first_entry? 'disabled' : 'readonly' }}>
                                 </td>
                                 <td class="hide-print">{{ $sale->beat->name }}</td>
                                 <td class="hide-print">{{ $sale->remarks }}</td>

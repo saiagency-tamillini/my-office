@@ -18,13 +18,14 @@ class CollectionController extends Controller
 {
     public function index(Request $request)
     {
+        $beats = Beat::orderBy('name')->get();
         $salesmen = Beat::whereNotNull('salesman')
             ->select('salesman')
             ->distinct()
             ->orderBy('salesman')
             ->pluck('salesman');
 
-        $filtersApplied = $request->filled('salesman') || $request->filled('date');
+        $filtersApplied = $request->filled('salesman') || $request->filled('date') || $request->filled('beat_id');
 
         $entries = null;
 
@@ -46,12 +47,18 @@ class CollectionController extends Controller
                 $query->whereDate('payment_date', $request->date);
             }
 
+            if ($request->filled('beat_id')) {
+                $query->whereHas('partySale.beat', function ($q) use ($request) {
+                    $q->where('id', $request->beat_id);
+                });
+            }
+
             $entries = $query->latest('payment_date')
                 ->paginate($perPage)
                 ->withQueryString();
         }
 
-        return view('collections.index', compact('salesmen', 'entries', 'filtersApplied', 'perPage'));
+        return view('collections.index', compact('salesmen', 'entries', 'filtersApplied', 'perPage', 'beats'));
     }
 
     public function download(Request $request)

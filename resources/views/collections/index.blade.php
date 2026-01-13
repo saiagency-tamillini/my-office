@@ -12,7 +12,7 @@
             <div class="card-body">
                 <form id="filterForm" method="GET" action="{{ route('collections.index') }}" class="row g-3 align-items-end">
 
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-2">
                         <label class="form-label fw-semibold">Salesman</label>
                         <select name="salesman" class="form-select">
                             <option value="">Select Salesman</option>
@@ -23,11 +23,23 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-12 col-md-3">
+                    <div class="col-12 col-md-2">
+                        <label class="form-label fw-semibold">Beat</label>
+                        <select name="beat_id" class="form-select">
+                            <option value="">Select Beat</option>
+                            @foreach($beats as $beat)
+                                <option value="{{ $beat->id }}"
+                                    {{ request('beat_id') == $beat->id ? 'selected' : '' }}>
+                                    {{ $beat->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2">
                         <label class="form-label fw-semibold">Payment Date</label>
                         <input type="date" name="date" class="form-control" value="{{ request('date') }}">
                     </div>
-                    <div class="col-12 col-md-2">
+                    <div class="col-12 col-md-1">
                         <label class="form-label fw-semibold">Show</label>
                         <select name="per_page" class="form-select" id="perPage">
                             @foreach([10,25,50,100,200,500] as $n)
@@ -86,7 +98,7 @@
                                             <th class="text-end">Return</th>
                                             <th class="text-end">Online</th>
                                             <th class="text-end">Received</th>
-                                            <th class="text-end hide-print">Balance</th>
+                                            <th class="text-end">Balance</th>
                                             <th class="hide-print">Remarks</th>
                                             <th class="hide-print">Status</th>
                                         </tr>
@@ -132,7 +144,7 @@
                                                 <td class="text-end">{{ number_format((float)($entry->product_return ?? 0), 2) }}</td>
                                                 <td class="text-end">{{ number_format((float)($entry->online_payment ?? 0), 2) }}</td>
                                                 <td class="text-end fw-semibold">{{ number_format((float)($entry->amount_received ?? 0), 2) }}</td>
-                                                <td class="text-end fw-semibold hide-print">{{ number_format((float)($entry->balance ?? 0), 2) }}</td>
+                                                <td class="text-end fw-semibold">{{ number_format((float)($entry->balance ?? 0), 2) }}</td>
 
                                                 <td class="text-truncate hide-print" style="max-width: 240px;">{{ $entry->remarks ?? '-' }}</td>
 
@@ -149,7 +161,7 @@
                                             <th class="text-end">{{ number_format($totalAmount, 2) }}</th>
                                             <th colspan="3"></th>
                                             <th class="text-end">{{ number_format($totalReceived, 2) }}</th>
-                                            <th class="text-end hide-print">{{ number_format($totalBalance, 2) }}</th>
+                                            <th class="text-end">{{ number_format($totalBalance, 2) }}</th>
                                             <th class="hide-print"colspan="2"></th>
                                         </tr>
                                     </tfoot>

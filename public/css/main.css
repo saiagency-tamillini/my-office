@@ -3,6 +3,7 @@
     padding: 0px !important;
     /* border-radius: 6px; */
     transition: background-color 0.2s ease, color 0.2s ease;
+    margin: 5px;
 }
 
 .navbar .nav-link.active {
@@ -26,6 +27,27 @@ select.form-select,
 .form-check-input {
     cursor: pointer;
 }
+/* Hover dropdown for navbar */
+.navbar .dropdown:hover > .dropdown-menu {
+    display: block;
+    margin-top: 0;
+}
+
+/* Keep toggle clickable */
+.navbar .dropdown-toggle::after {
+    pointer-events: none;
+}
+.navbar .dropdown-menu {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+}
+
+.navbar .dropdown:hover .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+}
+
 @media print {
 
     /* A4 portrait page setup */

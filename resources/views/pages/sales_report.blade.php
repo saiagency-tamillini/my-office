@@ -395,6 +395,7 @@
 
         document.addEventListener('DOMContentLoaded', function () {
             const searchInput = document.getElementById('customerSearch');
+            
             const rows = document.querySelectorAll('tbody tr');
             searchInput.addEventListener('keyup', function () {
                 const searchValue = this.value.toLowerCase();
@@ -403,11 +404,8 @@
 
                     if (!customerCell) return;
 
-                    const select  = customerCell.querySelector('select[name*="[customer_id]"]');
-                    if (!select ) return;
-                    
-                    const customerName = select.options[select.selectedIndex].text.toLowerCase();
-                    
+                    const customerName = customerCell.textContent.toLowerCase();
+
                     if (customerName.includes(searchValue)) {
                         row.style.display = '';
                     } else {
