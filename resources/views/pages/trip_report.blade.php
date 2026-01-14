@@ -12,6 +12,13 @@
             </button>
         </div>
         <form method="GET" action="{{ route('trip.report') }}" class="mb-3">
+            <div class="mb-2">
+                <label class="form-label">Bill Date:</label>
+                <input type="date"
+                    name="bill_date"
+                    class="form-control"
+                    value="{{ request('bill_date', \Carbon\Carbon::today()->format('Y-m-d')) }}">
+            </div>
             <div class="mb-2">Filter by Salesman:</div>
             <div class="d-flex flex-wrap mb-2">
                 @foreach($salesmen as $salesman)
@@ -143,7 +150,7 @@
                             <td></td>
                             <td></td>
                             <td></td>
-                            <td class="hide-print">
+                            <td class="hide-print balance-col">
                                 <input type="number" class="form-control balance" 
                                     style="width: 100px;" 
                                     id="balance-{{ $sale->id }}" 
