@@ -6,43 +6,69 @@
 @section('content')
     <div class="container">
         <h2>Party Sales List</h2>
+        <div class="mb-3">
+            <!-- Filter Header (clickable) -->
+            <button class="btn btn-outline-primary w-100 text-start d-flex justify-content-between align-items-center"
+                    type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel"
+                    aria-expanded="false" aria-controls="filterPanel">
+                Filters
+                <i class="bi bi-chevron-down" id="filterIcon"></i>
+            </button>
+            <!-- Collapsible Filters -->
+            <div class="collapse mt-2" id="filterPanel">
+                <form method="GET" action="{{ route('party-sales.index') }}" class="mb-3">
+                    <div class="d-flex flex-column p-3 border rounded bg-light">
+                        <div class="d-flex gap-5 flex-wrap">
 
-        <form method="GET" action="{{ route('party-sales.index') }}" class="mb-3">
-            <div class="mb-2">
-                <label class="form-label">Bill Date:</label>
-                <input type="date"
-                    name="bill_date"
-                    class="form-control"
-                    value="{{ request('bill_date', \Carbon\Carbon::today()->format('Y-m-d')) }}">
-            </div>
-            <div class="mb-2">Filter by Salesman:</div>
-            <div class="d-flex flex-wrap mb-2">
-                @foreach($salesmen as $salesman)
-                    <div class="form-check me-3">
-                        <input class="form-check-input" type="checkbox" name="salesmen[]" 
-                            value="{{ $salesman }}" id="salesman_{{ $loop->index }}"
-                            {{ is_array(request('salesmen')) && in_array($salesman, request('salesmen')) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="salesman_{{ $loop->index }}">
-                            {{ $salesman }}
-                        </label>
+                            <!-- Bill Date -->
+                            <div class="mb-2 d-flex h-fit gap-2 align-items-center flex-wrap">
+                                <label class="form-label fw-bold mb-0">Bill Date:</label>
+                                <input type="date"
+                                    name="bill_date"
+                                    class="form-control"
+                                    value="{{ request('bill_date', \Carbon\Carbon::today()->format('Y-m-d')) }}">
+                            </div>
+
+                            <!-- Salesman -->
+                            <div class="d-flex flex-wrap h-fit flex-column mb-2">
+                                <div class="fw-bold">Filter by Salesman:</div>
+                                @foreach($salesmen as $salesman)
+                                    <div class="form-check me-3 cursor-pointer">
+                                        <input class="form-check-input border border-dark" type="checkbox" name="salesmen[]" 
+                                            value="{{ $salesman }}" id="salesman_{{ $loop->index }}"
+                                            {{ is_array(request('salesmen')) && in_array($salesman, request('salesmen')) ? 'checked' : '' }}>
+                                        <label class="form-check-label cursor-pointer" for="salesman_{{ $loop->index }}">
+                                            {{ $salesman }}
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <!-- Beat -->
+                            <div>
+                                <label class="form-label fw-bold">Filter by Beat:</label>
+                                <select name="beat_id" class="form-select">
+                                    <option value="">-- All Beats --</option>
+                                    @foreach($beats as $beat)
+                                        <option value="{{ $beat->id }}"
+                                                {{ request('beat_id') == $beat->id ? 'selected' : '' }}>
+                                            {{ $beat->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <!-- Filter Buttons -->
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary me-2">Filter</button>
+                            <a href="{{ route('reportTable') }}" class="btn btn-secondary">Reset</a>
+                        </div>
                     </div>
-                @endforeach
+                </form>
             </div>
-            <div class="mb-2">
-                <label class="form-label">Filter by Beat:</label>
-                <select name="beat_id" class="form-select">
-                    <option value="">-- All Beats --</option>
-                    @foreach($beats as $beat)
-                        <option value="{{ $beat->id }}"
-                            {{ request('beat_id') == $beat->id ? 'selected' : '' }}>
-                            {{ $beat->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary me-2">Filter</button>
-            <a href="{{ route('party-sales.index') }}" class="btn btn-secondary">Reset</a>
-        </form>
+        </div>
 
         <a href="{{ route('party-sales.create') }}" class="btn btn-primary mb-3">Add New</a>
         @if($sales->isNotEmpty())
@@ -354,6 +380,19 @@
                     document.getElementById('denominationError').classList.add('d-none');
                     form.submit();
                 }
+            });
+
+            // filters hide code
+            const collapseElement = document.getElementById('filterPanel');
+            const icon = document.getElementById('filterIcon');
+
+            collapseElement.addEventListener('show.bs.collapse', function () {
+                icon.classList.remove('bi-chevron-down');
+                icon.classList.add('bi-chevron-up');
+            });
+            collapseElement.addEventListener('hide.bs.collapse', function () {
+                icon.classList.remove('bi-chevron-up');
+                icon.classList.add('bi-chevron-down');
             });
         });
 

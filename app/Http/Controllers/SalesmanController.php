@@ -394,11 +394,11 @@ class SalesmanController extends Controller
         }
 
         // Sorting
-        $query->orderBy('beats.salesman')->orderBy('party_sales.bill_date');
         if ($request->has('sort') && in_array($request->sort, ['asc', 'desc'])) {
             $query->orderBy('customer_name', $request->sort);
+        } else {
+            $query->orderBy('beats.salesman')->orderBy('party_sales.bill_date');
         }
-
         return $query;
     }
 
