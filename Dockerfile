@@ -1,20 +1,20 @@
-# Use the official PHP image with Apache
 FROM php:8.2-apache
 
-# Install dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
-    locales \
+    libzip-dev \
     zip \
     unzip \
+    locales \
+    npm \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd \
-    && docker-php-ext-install pdo_mysql \
-    && apt-get install -y npm
+    && docker-php-ext-install gd pdo_mysql zip \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
@@ -25,20 +25,20 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy existing application directory contents
+# Copy application files
 COPY . /var/www/html
 
-# Copy existing application directory permissions
-COPY --chown=www-data:www-data . /var/www/html
+# Fix permissions
+RUN chown -R www-data:www-data /var/www/html
 
-# Copy the custom virtual host configuration
-COPY ./vhost.conf /etc/apache2/sites-available/000-default.conf
-
-# Set environment variables
+# Apache document root
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 
-# Expose port 80
+# Update Apache config for document root
+RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' \
+    /etc/apache2/sites-available/*.conf \
+    /etc/apache2/apache2.conf
+
 EXPOSE 80
 
-# Start Apache server
-CMD ["/bin/bash", "-c", "php artisan migrate && apache2-foreground"]
+CMD ["apache2-foreground"]
