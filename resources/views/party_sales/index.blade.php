@@ -151,7 +151,7 @@
                                 $totalAmountReceived += $sale->amount_received ?? 0;
                                 $totalBalance += $sale->balance ?? 0;
                             @endphp
-                            <tr>
+                            <tr class="{{$sale->first_entry ? 'bg-lite' : ''}}">
                                 <td>{{ $serial++ }}</td>
                                 <td class="customer-name">
                                     <select name="sales[{{ $sale->id }}][customer_id]" class="form-control w-100 customer-select">

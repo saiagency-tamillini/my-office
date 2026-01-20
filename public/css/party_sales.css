@@ -85,6 +85,9 @@ table td input[type="number"] {
 .h-fit{
     height: fit-content !important;
 }
+.bg-lite td {
+    background-color: #6c6c6c26 !important;
+}
 @media print {
 
     /* A4 portrait page setup */
