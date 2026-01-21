@@ -78,8 +78,8 @@ class PartySaleController extends Controller
             'remarks' => 'nullable|string',
         ]);
 
-        $manualBeat = \App\Models\Beat::where('name', 'Manual')->firstOrFail();
-
+        // $manualBeat = \App\Models\Beat::where('name', 'Manual')->firstOrFail();
+        $manual_customer = Customer::where('id', $request->customer_id)->firstOrFail();
         $lastSale = PartySale::where('bill_no', 'like', 'MAN%')
                             ->orderBy('id', 'desc')
                             ->first();
@@ -93,7 +93,7 @@ class PartySaleController extends Controller
 
         $bill_no = 'MAN' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
         PartySale::create([
-            'beat_id' => $manualBeat->id,
+            'beat_id' => $manual_customer->beat_id,
             'customer_id' => $request->customer_id,
             'bill_no' => $bill_no,
             'bill_date' => $request->bill_date,
