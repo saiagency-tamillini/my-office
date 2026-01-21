@@ -7,6 +7,7 @@ use App\Http\Controllers\PartySaleController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SalesmanController;
 use App\Http\Controllers\CollectionController;
+use App\Http\Controllers\ProductController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -23,6 +24,7 @@ Route::get('party-sales-download', [PartySaleController::class, 'download'])->na
 Route::resource('party-sales', PartySaleController::class);
 
 Route::resource('customers', CustomerController::class);
+Route::resource('products', ProductController::class);
 
 Route::get('/customers/{customer}/transactions', [CustomerController::class, 'transactions'])
     ->name('customers.transactions');
@@ -40,5 +42,7 @@ Route::get('/credit-details-popup', [fileController::class, 'credit_popup']);
 
 Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
 Route::get('/collections/download', [CollectionController::class, 'download'])->name('collections.download');
+Route::get('/manual-stocks', [ProductController::class, 'manual_stock_report'])->name('manualStocks');
+
 
 

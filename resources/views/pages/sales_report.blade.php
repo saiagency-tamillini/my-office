@@ -159,7 +159,7 @@
                             <th >Balance</th>
                             <th class="hide-print">Beat</th>
                             <th class="hide-print">Remarks</th>
-                            <th class="hide-print">Action</th>
+                            {{-- <th class="hide-print">Action</th> --}}
                         </tr>
                     </thead>
                     <tbody>
@@ -240,7 +240,7 @@
                                 </td>
                                 <td class="hide-print">{{ $sale->beat->name }}</td>
                                 <td class="hide-print">{{ $sale->remarks }}</td>
-                                <td class="hide-print">
+                                {{-- <td class="hide-print">
                                     <a href="{{ route('party-sales.edit', $sale->id) }}" class="btn btn-sm btn-warning icon-btn" title="Edit">
                                         <i class="fas fa-edit"></i>
                                         <span class="btn-text">Edit</span>
@@ -249,7 +249,7 @@
                                         <i class="fas fa-trash"></i>
                                         <span class="btn-text">Delete</span>
                                     </button>
-                                </td>
+                                </td> --}}
 
                             </tr>
                         @empty

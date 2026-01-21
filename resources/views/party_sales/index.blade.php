@@ -175,7 +175,7 @@
                                 <td class="date-col">{{ $sale->bill_date ? \Carbon\Carbon::parse($sale->bill_date)->format('d-m-Y') : '' }}
                                     <input type="hidden"
                                         name="sales[{{ $sale->id }}][bill_date]"
-                                        value="{{ $sale->bill_date }}">
+                                        value="{{ $sale->bill_date }}" {{  $sale->first_entry ? 'disabled' : '' }}>
                                 </td>
                                 <td class="aging-col">{{ $aging }}</td>
                                 <td>{{ $sale->amount }}</td>
