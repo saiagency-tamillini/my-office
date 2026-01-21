@@ -6,6 +6,8 @@ use App\Models\PartySale;
 use App\Models\Beat;
 use App\Models\Customer;
 use App\Models\PaymentEntry;
+use App\Models\Product;
+use App\Models\ManualBillItem;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\Response;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class PartySaleController extends Controller
 {
@@ -60,7 +63,8 @@ class PartySaleController extends Controller
     {
         $beats = Beat::all();
         $customers = Customer::with('beat')->get();
-        return view('party_sales.create', compact('beats','customers'));
+        $products = Product::orderBy('name')->get();
+        return view('party_sales.create', compact('beats','customers','products'));
     }
 
     public function store(Request $request)
@@ -76,45 +80,72 @@ class PartySaleController extends Controller
             'amount_received' => 'nullable|numeric',
             'balance' => 'nullable|numeric',
             'remarks' => 'nullable|string',
+            'items' => 'nullable|array',
+            'items.*.product_id' => 'required_with:items|exists:products,id',
+            'items.*.box' => 'nullable|integer|min:0',
+            'items.*.pcs' => 'nullable|integer|min:0',
         ]);
+        DB::transaction(function () use ($request) {
+            // $manualBeat = \App\Models\Beat::where('name', 'Manual')->firstOrFail();
+            $manual_customer = Customer::where('id', $request->customer_id)->firstOrFail();
+            $lastSale = PartySale::where('bill_no', 'like', 'MAN%')
+                                ->orderBy('id', 'desc')
+                                ->first();
 
-        // $manualBeat = \App\Models\Beat::where('name', 'Manual')->firstOrFail();
-        $manual_customer = Customer::where('id', $request->customer_id)->firstOrFail();
-        $lastSale = PartySale::where('bill_no', 'like', 'MAN%')
-                            ->orderBy('id', 'desc')
-                            ->first();
+            if ($lastSale && preg_match('/MAN(\d+)/', $lastSale->bill_no, $matches)) {
+                $lastNumber = (int) $matches[1];
+                $nextNumber = $lastNumber + 1;
+            } else {
+                $nextNumber = 1;
+            }
 
-        if ($lastSale && preg_match('/MAN(\d+)/', $lastSale->bill_no, $matches)) {
-            $lastNumber = (int) $matches[1];
-            $nextNumber = $lastNumber + 1;
-        } else {
-            $nextNumber = 1;
-        }
+            $bill_no = 'MAN' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            $partySale = PartySale::create([
+                'beat_id' => $manual_customer->beat_id,
+                'customer_id' => $request->customer_id,
+                'bill_no' => $bill_no,
+                'bill_date' => $request->bill_date,
+                'aging' => $request->aging,
+                'amount' => $request->amount,
+                'cd' => $request->cd,
+                'product_return' => $request->product_return,
+                'online_payment' => $request->online_payment,
+                'amount_received' => $request->amount_received,
+                'balance' => $request->amount,
+                'remarks' => $request->remarks,
+            ]);
+            // ✅ 2) Save ManualBillItem rows (DETAILS)
+            $items = collect($request->items ?? [])
+                ->filter(function ($item) {
+                    return ((int)($item['box'] ?? 0) > 0) || ((int)($item['pcs'] ?? 0) > 0);
+                })
+                ->map(function ($item) {
+                    return [
+                        'product_id' => $item['product_id'],
+                        'box' => (int)($item['box'] ?? 0),
+                        'pcs' => (int)($item['pcs'] ?? 0),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                })
+                ->values()
+                ->all();
 
-        $bill_no = 'MAN' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-        PartySale::create([
-            'beat_id' => $manual_customer->beat_id,
-            'customer_id' => $request->customer_id,
-            'bill_no' => $bill_no,
-            'bill_date' => $request->bill_date,
-            'aging' => $request->aging,
-            'amount' => $request->amount,
-            'cd' => $request->cd,
-            'product_return' => $request->product_return,
-            'online_payment' => $request->online_payment,
-            'amount_received' => $request->amount_received,
-            'balance' => $request->amount,
-            'remarks' => $request->remarks,
-        ]);
+            if (!empty($items)) {
+               $partySale->manualItems()->createMany($items);
+            }
+        });
 
         return redirect()->route('party-sales.index')->with('success', 'Record added successfully.');
     }
 
     public function edit(PartySale $partySale)
     {
+        $partySale->load(['manualItems.product']);
         $beats = Beat::all();
-        $customers = Customer::with('beat')->get(); 
-        return view('party_sales.edit', compact('partySale', 'beats', 'customers'));
+        $customers = Customer::with('beat')->get();
+        $products = Product::orderBy('name')->get(); 
+        return view('party_sales.edit', compact('partySale', 'beats', 'customers', 'products'));
     }
 
     public function update(Request $request, PartySale $partySale)
@@ -133,10 +164,33 @@ class PartySaleController extends Controller
             'balance' => 'nullable|numeric',
             'remarks' => 'nullable|string',
             'modified' => 'nullable|boolean',
+            'items' => 'nullable|array',
+            'items.*.product_id' => 'required_with:items|exists:products,id',
+            'items.*.box' => 'nullable|integer|min:0',
+            'items.*.pcs' => 'nullable|integer|min:0',
         ]);
-        $validated['modified'] = $request->has('modified');
-        $partySale->update($validated);
+        DB::transaction(function () use ($request, $partySale, $validated) {
+            $validated['modified'] = $request->has('modified');
+            $partySale->update($validated);
+                    ManualBillItem::where('party_sale_id', $partySale->id)->delete();
 
+            $items = collect($request->items ?? [])
+                ->filter(fn($i) => ((int)($i['box'] ?? 0) > 0) || ((int)($i['pcs'] ?? 0) > 0))
+                ->map(fn($i) => [
+                    'party_sale_id' => $partySale->id,
+                    'product_id' => $i['product_id'],
+                    'box' => (int)($i['box'] ?? 0),
+                    'pcs' => (int)($i['pcs'] ?? 0),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ])
+                ->values()
+                ->all();
+
+            if (!empty($items)) {
+                ManualBillItem::insert($items);
+            }
+        });
         return redirect()->route('party-sales.index')->with('success', 'Record updated successfully.');
     }
 

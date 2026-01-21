@@ -16,6 +16,11 @@
         </div>
     @endif
 
+    @php
+        // product ids already added in this party sale
+        $existingProductIds = $partySale->manualItems->pluck('product_id')->toArray();
+    @endphp
+
     <form action="{{ route('party-sales.update', $partySale->id) }}" method="POST">
         @csrf
         @method('PUT')
@@ -32,15 +37,17 @@
             </select>
         </div>
 
-        <select name="customer_id" class="form-control">
-            {{-- <option value="">Select Customer</option> --}}
-            @foreach($customers as $customer)
-                <option value="{{ $customer->id }}"
-                    {{ old('customer_id', $partySale->customer_id ?? '') == $customer->id ? 'selected' : '' }}>
-                    {{ $customer->name }} ({{ $customer->beat->name ?? '' }})
-                </option>
-            @endforeach
-        </select>
+        <div class="mb-3">
+            <label class="form-label">Customer Name</label>
+            <select name="customer_id" class="form-control customer-select" required>
+                @foreach($customers as $customer)
+                    <option value="{{ $customer->id }}"
+                        {{ old('customer_id', $partySale->customer_id ?? '') == $customer->id ? 'selected' : '' }}>
+                        {{ $customer->name }} ({{ $customer->beat->name ?? '' }})
+                    </option>
+                @endforeach
+            </select>
+        </div>
 
         <div class="mb-3">
             <label for="bill_no" class="form-label">Bill No</label>
@@ -49,13 +56,9 @@
 
         <div class="mb-3">
             <label for="bill_date" class="form-label">Bill Date</label>
-            <input type="date" name="bill_date" id="bill_date" class="form-control" value="{{ $partySale->bill_date ? $partySale->bill_date->format('Y-m-d') : '' }}">
+            <input type="date" name="bill_date" id="bill_date" class="form-control"
+                   value="{{ $partySale->bill_date ? $partySale->bill_date->format('Y-m-d') : '' }}">
         </div>
-
-        {{-- <div class="mb-3">
-            <label for="aging" class="form-label">Aging</label>
-            <input type="text" name="aging" id="aging" class="form-control" value="{{ $partySale->aging }}">
-        </div> --}}
 
         <div class="mb-3">
             <label for="amount" class="form-label">Amount</label>
@@ -79,17 +82,14 @@
 
         <div class="mb-3">
             <label for="amount_received" class="form-label">Amount Received</label>
-            <input type="text" name="amount_received" id="amount_received" class="form-control" value="{{ $partySale->amount_received }}">
+            <input type="number" step="0.01" name="amount_received" id="amount_received" class="form-control" value="{{ $partySale->amount_received }}">
         </div>
 
-        {{-- <div class="mb-3">
-            <label for="balance" class="form-label">Balance</label>
-            <input type="text" name="balance" id="balance" class="form-control" value="{{ $partySale->balance }}">
-        </div> --}}
         <div class="mb-3">
             <label for="remarks" class="form-label">Remarks</label>
             <input type="text" name="remarks" id="remarks" class="form-control" value="{{ $partySale->remarks }}">
         </div>
+
         <div class="mb-3 form-check">
             <input type="checkbox"
                 name="modified"
@@ -97,13 +97,130 @@
                 class="form-check-input"
                 value="1"
                 {{ $partySale->modified ? 'checked' : '' }}>
-                
             <label class="form-check-label" for="modified">
                 Mark as Modified
             </label>
         </div>
 
+        {{-- ✅ Products section --}}
+        <h5 class="mt-4">Products</h5>
+
+        <div class="row g-2 align-items-end mb-3">
+            <div class="col-md-8">
+                <label class="form-label">Select Product</label>
+                <select id="productDropdown" class="form-control">
+                    <option value="">-- Select a product --</option>
+                    @foreach($products as $product)
+                        @if(!in_array($product->id, $existingProductIds))
+                            <option value="{{ $product->id }}">{{ $product->name }}</option>
+                        @endif
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <button type="button" id="addProductBtn" class="btn btn-success w-100">
+                    + Add Product
+                </button>
+            </div>
+        </div>
+
+        <table class="table table-bordered" id="productsTable">
+            <thead>
+                <tr>
+                    <th style="width:45%">Product</th>
+                    <th style="width:15%">Box</th>
+                    <th style="width:15%">Pcs</th>
+                    <th style="width:25%">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($partySale->manualItems as $index => $item)
+                    <tr data-product-id="{{ $item->product_id }}">
+                        <td>
+                            {{ $item->product->name ?? 'Product Deleted' }}
+                            <input type="hidden" name="items[{{ $index }}][product_id]" value="{{ $item->product_id }}">
+                        </td>
+                        <td>
+                            <input type="number" min="0" name="items[{{ $index }}][box]" class="form-control" value="{{ $item->box }}">
+                        </td>
+                        <td>
+                            <input type="number" min="0" name="items[{{ $index }}][pcs]" class="form-control" value="{{ $item->pcs }}">
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm remove-product">Remove</button>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
         <button type="submit" class="btn btn-primary">Update</button>
     </form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+
+    $('.customer-select').select2({
+        width: '100%',
+        placeholder: 'Type to search customer...',
+        allowClear: false
+    });
+
+    // ✅ start after existing rows
+    let itemIndex = $('#productsTable tbody tr').length;
+
+    $('#addProductBtn').on('click', function () {
+        const $dd = $('#productDropdown');
+        const productId = $dd.val();
+
+        if (!productId) {
+            alert('Please select a product');
+            return;
+        }
+
+        const productName = $dd.find('option:selected').text();
+
+        const row = `
+            <tr data-product-id="${productId}">
+                <td>
+                    ${productName}
+                    <input type="hidden" name="items[${itemIndex}][product_id]" value="${productId}">
+                </td>
+                <td>
+                    <input type="number" min="0" name="items[${itemIndex}][box]" class="form-control" value="0">
+                </td>
+                <td>
+                    <input type="number" min="0" name="items[${itemIndex}][pcs]" class="form-control" value="0">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm remove-product">Remove</button>
+                </td>
+            </tr>
+        `;
+
+        $('#productsTable tbody').append(row);
+
+        // remove from dropdown
+        $dd.find(`option[value="${productId}"]`).remove();
+        $dd.val('');
+
+        itemIndex++;
+    });
+
+    // remove row and add back to dropdown
+    $(document).on('click', '.remove-product', function () {
+        const $row = $(this).closest('tr');
+        const productId = $row.data('product-id');
+        const productName = $row.find('td:first').clone().children().remove().end().text().trim();
+
+        $('#productDropdown').append(`<option value="${productId}">${productName}</option>`);
+        $row.remove();
+    });
+
+});
+</script>
+@endpush

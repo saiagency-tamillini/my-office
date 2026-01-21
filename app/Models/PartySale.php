@@ -40,4 +40,8 @@ class PartySale extends Model
     {
         return $this->belongsTo(Customer::class);
     }
+    public function manualItems()
+    {
+        return $this->hasMany(ManualBillItem::class , 'party_sale_id');
+    }
 }
