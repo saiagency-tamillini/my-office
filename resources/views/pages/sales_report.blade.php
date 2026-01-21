@@ -115,6 +115,13 @@
             <div class="col-md-4">
                 <input type="text" id="billNoSearch" class="form-control" placeholder="Search by Bill No...">
             </div>
+            <div  class="col-md-2">
+            </div>
+            <div class="col-md-2 hide-print">
+                <div class="fw-bold">
+                    Total Records: {{ $sales->count() }}
+                </div>
+            </div>
         </div>
 
         @php

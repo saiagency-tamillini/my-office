@@ -23,7 +23,7 @@
 
         <div class="mb-3">
             <label>Customer Name</label>
-            <select name="customer_id" class="form-control">
+            <select name="customer_id" class="form-control customer-select">
                 @foreach($customers as $customer)
                     <option value="{{ $customer->id }}" {{ (isset($partySale) && $partySale->customer_id==$customer->id) ? 'selected' : '' }}>
                         {{ $customer->name.' ('.$customer->beat->name.')'}}
@@ -54,4 +54,13 @@
         <button class="btn btn-primary" type="submit">{{ isset($partySale) ? 'Update' : 'Save' }}</button>
     </form>
 </div>
+<script>
+    $(document).ready(function () {
+        $('.customer-select').select2({
+            width: '100%',
+            placeholder: 'Type to search customer...',
+            allowClear: false
+        });
+    });
+</script>
 @endsection

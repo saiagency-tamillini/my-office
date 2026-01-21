@@ -32,7 +32,7 @@
             </a>
 
             <a class="nav-link {{ request()->routeIs('collections.*') ? 'active' : '' }}" href="{{ route('collections.index') }}">
-                <i class="bi bi-list-check"></i> Collection
+                <i class="bi bi-list-check"></i> Daily Collections
             </a>
 
             <div class="nav-item dropdown">
@@ -80,7 +80,7 @@
                     </li>
                     <li>
                         <a class="dropdown-item {{ request()->routeIs('reportTable') ? 'active' : '' }}" href="{{ route('reportTable') }}">
-                            <i class="bi bi-list-check"></i> Sales Report
+                            <i class="bi bi-list-check"></i> Salesman Collections
                         </a>
                     </li> 
                     <li>
