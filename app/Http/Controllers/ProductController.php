@@ -72,7 +72,7 @@ class ProductController extends Controller
         if ($startDate && $endDate) {
             $filtersApplied = true;
 
-            $items = ManualBillItem::with(['product', 'partySale'])
+            $items = ManualBillItem::with(['product', 'partySale.customer'])
                 ->whereHas('partySale', function ($q) use ($startDate, $endDate) {
                     $q->whereBetween('bill_date', [$startDate, $endDate]);
                 })
@@ -81,13 +81,22 @@ class ProductController extends Controller
                         ->whereColumn('party_sales.id', 'manual_bill_items.party_sale_id')
                 )
                 ->get();
+            $totals = ManualBillItem::select('product_id',\DB::raw('SUM(box) as total_box'),
+                    \DB::raw('SUM(pcs) as total_pcs')
+                )
+                ->with('product')
+                ->whereHas('partySale', function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('bill_date', [$startDate, $endDate]);
+                })
+                ->groupBy('product_id')
+                ->get();
         }
-
         return view('pages.manual_bill_report', compact(
             'items',
             'startDate',
             'endDate',
-            'filtersApplied'
+            'filtersApplied',
+            'totals'
         ));
     }
 }
