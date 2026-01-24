@@ -161,8 +161,11 @@ class SalesmanController extends Controller
         $query = $this->buildReportQuery($request);
         $sales = $query->get();
         $customers = Customer::with('beat')->get();
-        $selectedBeat = $request->filled('beat_id') ? Beat::find($request->beat_id) : null;
-        return view('pages.sales_report', compact('sales', 'salesmen', 'customers','beats','selectedBeat'));
+        $selectedBeats = collect();
+        if ($request->filled('beat_ids')) {
+            $selectedBeats = Beat::whereIn('id', (array) $request->beat_ids)->get();
+        }
+        return view('pages.sales_report', compact('sales', 'salesmen', 'customers','beats','selectedBeats'));
     }
 
     public function downloadReport(Request $request)
@@ -389,8 +392,11 @@ class SalesmanController extends Controller
         }
 
         // Beat filter
-        if ($request->filled('beat_id')) {
-            $query->where('party_sales.beat_id', $request->beat_id);
+        if ($request->filled('beat_ids')) {
+            $beatIds = array_filter((array) $request->beat_ids, fn($v) => $v !== null && $v !== '');
+            if (count($beatIds)) {
+                $query->whereIn('party_sales.beat_id', $beatIds);
+            }
         }
 
         // Sorting

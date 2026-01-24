@@ -93,13 +93,18 @@
             $currentSalesman = null;
             $serial = 1;
         @endphp
+        
         <form method="POST" action="{{ route('bulk-update') }}">
             @csrf
             <div id="printArea">
+                <div class="d-flex justify-content-end align-items-center mb-2 hide-print">
+                    <div class="fw-bold">
+                        Total Records: {{ $sales->count() }}
+                    </div>
+                </div>
                 @if($selectedBeat)
                     <div class="text-center mb-3 print-beat-heading">
                         <h4>{{ $selectedBeat->name }} ({{ request('bill_date', \Carbon\Carbon::today()->format('d-m-Y')) }})</h4>
-                        {{-- <p>Date: {{ request('bill_date', \Carbon\Carbon::today()->format('d-m-Y')) }}</p> --}}
                     </div>
                 @endif
                 <table class="table table-bordered">
@@ -170,7 +175,7 @@
                                 <td class="date-col">{{ $sale->bill_date ? \Carbon\Carbon::parse($sale->bill_date)->format('d-m-Y') : '' }}
                                     <input type="hidden"
                                         name="sales[{{ $sale->id }}][bill_date]"
-                                        value="{{ $sale->bill_date }}">
+                                        value="{{ $sale->bill_date }}" {{  $sale->first_entry ? 'disabled' : '' }}>
                                 </td>
                                 <td class="aging-col">{{ $aging }}</td>
                                 <td>{{ $sale->amount }}</td>

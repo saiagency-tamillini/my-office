@@ -47,10 +47,13 @@ class CollectionController extends Controller
                 $query->whereDate('payment_date', $request->date);
             }
 
-            if ($request->filled('beat_id')) {
-                $query->whereHas('partySale.beat', function ($q) use ($request) {
-                    $q->where('id', $request->beat_id);
-                });
+            if ($request->filled('beat_ids')) {
+                $beatIds = array_filter((array) $request->beat_ids, fn($v) => $v !== null && $v !== '');
+                if (count($beatIds)) {
+                    $query->whereHas('partySale.beat', function ($q) use ($beatIds) {
+                        $q->whereIn('id', $beatIds);
+                    });
+                }
             }
 
             $entries = $query->latest('payment_date')
@@ -77,6 +80,15 @@ class CollectionController extends Controller
             $query->whereDate('payment_date', $request->date);
         }
 
+        // Filter: Beat
+        if ($request->filled('beat_ids')) {
+            $beatIds = array_filter((array) $request->beat_ids, fn($v) => $v !== null && $v !== '');
+            if (count($beatIds)) {
+                $query->whereHas('partySale.beat', function ($q) use ($beatIds) {
+                    $q->whereIn('id', $beatIds);
+                });
+            }
+        }
         $entries = $query->orderBy('payment_date', 'desc')->get();
 
         // Group by salesman (fallback "No Salesman")

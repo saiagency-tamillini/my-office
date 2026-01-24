@@ -32,7 +32,11 @@
             </a>
 
             <a class="nav-link {{ request()->routeIs('collections.*') ? 'active' : '' }}" href="{{ route('collections.index') }}">
-                <i class="bi bi-list-check"></i> Collection
+                <i class="bi bi-list-check"></i> Daily Collections
+            </a>
+
+            <a class="nav-link {{ request()->routeIs('manualStocks') ? 'active' : '' }}" href="{{ route('manualStocks') }}">
+                <i class="bi bi-list-check"></i> Manual Products list
             </a>
 
             <div class="nav-item dropdown">
@@ -54,6 +58,13 @@
                         <a class="dropdown-item {{ request()->routeIs('customers.*') ? 'active' : '' }}"
                         href="{{ route('customers.index') }}">
                             <i class="bi bi-list-check"></i> Party Masters
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item {{ request()->routeIs('products.*') ? 'active' : '' }}"
+                        href="{{ route('products.index') }}">
+                            <i class="bi bi-list-check"></i> Products
                         </a>
                     </li>
                 </ul>
@@ -80,7 +91,7 @@
                     </li>
                     <li>
                         <a class="dropdown-item {{ request()->routeIs('reportTable') ? 'active' : '' }}" href="{{ route('reportTable') }}">
-                            <i class="bi bi-list-check"></i> Sales Report
+                            <i class="bi bi-list-check"></i> Salesman Collections
                         </a>
                     </li> 
                     <li>

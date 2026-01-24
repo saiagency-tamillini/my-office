@@ -21,18 +21,6 @@
                     <div class="d-flex flex-column p-3 border rounded bg-light">
                         <div class="d-flex gap-5 flex-wrap">
 
-                            <!-- Bill Date -->
-                            {{-- <div class="mb-2 d-flex h-fit gap-2 align-items-center">
-                                <label class="form-label">Bill Date:</label>
-                                <input
-                                    type="date"
-                                    name="bill_date"
-                                    class="form-control w-auto"
-                                    value="{{ request('bill_date') }}"
-                                    onclick="this.showPicker()"
-                                    onfocus="this.showPicker()">
-                            </div> --}}
-
                             <!-- Date Range -->
                             <div class="mb-2 d-flex h-fit gap-2 align-items-center flex-wrap">
                                 <label class="form-label fw-bold mb-0">Bill Date:</label>
@@ -76,15 +64,41 @@
                             <!-- Beat -->
                             <div>
                                 <label class="form-label fw-bold">Filter by Beat:</label>
-                                <select name="beat_id" class="form-select">
-                                    <option value="">-- All Beats --</option>
-                                    @foreach($beats as $beat)
-                                        <option value="{{ $beat->id }}"
-                                                {{ request('beat_id') == $beat->id ? 'selected' : '' }}>
-                                            {{ $beat->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <div class="d-flex gap-2">
+                                    @php
+                                        $filteredBeats = array_filter((array) request('beat_ids'));
+                                    @endphp
+
+                                    <div id="beat-container">
+                                        @forelse($filteredBeats as $filteredBeat)
+                                            <div class="d-flex align-items-center gap-2 beat-row mb-2">
+                                                <select name="beat_ids[]" class="form-select beat-select mb-2">
+                                                    <option value="">-- Select Beat --</option>
+                                                    @foreach($beats as $beat)
+                                                        <option value="{{ $beat->id }}"
+                                                            {{ $beat->id == $filteredBeat ? 'selected' : '' }}>
+                                                            {{ $beat->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <button type="button" class="btn btn-outline-danger btn-sm remove-beat">❌</button>
+                                            </div>
+                                        @empty
+                                            <div class="d-flex align-items-center gap-2 beat-row">
+                                                <select name="beat_ids[]" class="form-select beat-select">
+                                                    <option value="">-- Select Beat --</option>
+                                                    @foreach($beats as $beat)
+                                                        <option value="{{ $beat->id }}">{{ $beat->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <button type="button" class="btn btn-outline-danger btn-sm remove-beat d-none">❌</button>
+                                            </div>
+                                        @endforelse
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary h-fit" id="add-beat">
+                                        + Add More
+                                    </button>
+                                </div>
                             </div>
 
                         </div>
@@ -115,6 +129,13 @@
             <div class="col-md-4">
                 <input type="text" id="billNoSearch" class="form-control" placeholder="Search by Bill No...">
             </div>
+            <div  class="col-md-2">
+            </div>
+            <div class="col-md-2 hide-print">
+                <div class="fw-bold">
+                    Total Records: {{ $sales->count() }}
+                </div>
+            </div>
         </div>
 
         @php
@@ -125,10 +146,12 @@
         <form method="POST" action="{{ route('bulk-sale-update') }}">
             @csrf
             <div id="printArea">
-                @if($selectedBeat)
+                @if($selectedBeats->isNotEmpty())
                     <div class="text-center mb-3 print-beat-heading">
-                        <h4>{{ $selectedBeat->name }} ({{ request('bill_date', \Carbon\Carbon::today()->format('d-m-Y')) }})</h4>
-                        {{-- <p>Date: {{ request('bill_date', \Carbon\Carbon::today()->format('d-m-Y')) }}</p> --}}
+                        <h4>
+                            Beats:
+                            {{ $selectedBeats->pluck('name')->implode(', ') }}
+                        </h4>
                     </div>
                 @endif
                 <table class="table table-bordered">
@@ -152,7 +175,7 @@
                             <th >Balance</th>
                             <th class="hide-print">Beat</th>
                             <th class="hide-print">Remarks</th>
-                            <th class="hide-print">Action</th>
+                            {{-- <th class="hide-print">Action</th> --}}
                         </tr>
                     </thead>
                     <tbody>
@@ -233,7 +256,7 @@
                                 </td>
                                 <td class="hide-print">{{ $sale->beat->name }}</td>
                                 <td class="hide-print">{{ $sale->remarks }}</td>
-                                <td class="hide-print">
+                                {{-- <td class="hide-print">
                                     <a href="{{ route('party-sales.edit', $sale->id) }}" class="btn btn-sm btn-warning icon-btn" title="Edit">
                                         <i class="fas fa-edit"></i>
                                         <span class="btn-text">Edit</span>
@@ -242,7 +265,7 @@
                                         <i class="fas fa-trash"></i>
                                         <span class="btn-text">Delete</span>
                                     </button>
-                                </td>
+                                </td> --}}
 
                             </tr>
                         @empty
@@ -448,6 +471,70 @@
                 icon.classList.remove('bi-chevron-up');
                 icon.classList.add('bi-chevron-down');
             });
+        });
+        const beats = @json($beats);
+        const beatContainer = document.getElementById('beat-container');
+        const addBeatBtn = document.getElementById('add-beat');
+
+        function getSelectedBeats() {
+            return Array.from(document.querySelectorAll('.beat-select'))
+                .map(select => select.value)
+                .filter(val => val !== "");
+        }
+
+        function refreshOptions() {
+            const selected = getSelectedBeats();
+
+            document.querySelectorAll('.beat-select').forEach(select => {
+                const current = select.value;
+                select.innerHTML = '<option value="">-- Select Beat --</option>';
+
+                beats.forEach(beat => {
+                    if (!selected.includes(String(beat.id)) || String(beat.id) === current) {
+                        const option = document.createElement('option');
+                        option.value = beat.id;
+                        option.text = beat.name;
+                        option.selected = String(beat.id) === current;
+                        select.appendChild(option);
+                    }
+                });
+            });
+        }
+
+        function createBeatRow() {
+            const row = document.createElement('div');
+            row.className = 'd-flex align-items-center gap-2 mb-2 beat-row';
+
+            row.innerHTML = `
+                <select name="beat_ids[]" class="form-select beat-select">
+                    <option value="">-- Select Beat --</option>
+                </select>
+                <button type="button" class="btn btn-outline-danger btn-sm remove-beat">
+                    ❌
+                </button>
+            `;
+
+            beatContainer.appendChild(row);
+            refreshOptions();
+        }
+
+        addBeatBtn.addEventListener('click', () => {
+            createBeatRow();
+        });
+
+        // Change event → refresh options
+        beatContainer.addEventListener('change', function (e) {
+            if (e.target.classList.contains('beat-select')) {
+                refreshOptions();
+            }
+        });
+
+        // Remove row
+        beatContainer.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-beat')) {
+                e.target.closest('.beat-row').remove();
+                refreshOptions();
+            }
         });
     </script>
 @endpush

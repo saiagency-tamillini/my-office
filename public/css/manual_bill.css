@@ -1,0 +1,21 @@
+@media print {
+
+    /* When modal print is active, hide main table */
+    body.print-modal-only #printArea,
+    body.print-modal-only #printArea * {
+        visibility: hidden !important;
+    }
+
+    /* Show modal only */
+    body.print-modal-only #printModal,
+    body.print-modal-only #printModal * {
+        visibility: visible !important;
+    }
+
+    body.print-modal-only #printModal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+}
