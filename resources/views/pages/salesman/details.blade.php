@@ -20,6 +20,7 @@
                             <th>Customer</th>
                             <th>Date</th>
                             <th>Amount</th>
+                            <th>Online Payment</th>
                             <th>Amount Received</th>
                             <th>Balance</th>
                             <th>Remarks</th>
@@ -31,7 +32,8 @@
                                 <td>{{ $entry->customer->name }}</td>
                                 <td>{{ $entry->payment_date }}</td>
                                 <td>{{ $entry->amount }}</td>
-                                <td>{{ $entry->amount_received }}</td>
+                                <td>{{ $entry->online_payment ?? '-' }}</td>
+                                <td>{{ $entry->amount_received ?? '-' }}</td>
                                 <td>{{ $entry->balance }}</td>
                                 <td>{{ $entry->remarks }}</td>
                             </tr>

@@ -16,6 +16,7 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Services\PaymentEntryService;
 
 class PartySaleController extends Controller
 {
@@ -74,9 +75,9 @@ class PartySaleController extends Controller
             'bill_date' => 'nullable|date',
             'aging' => 'nullable|string',
             'amount' => 'nullable|numeric',
-            'cd' => 'nullable|string',
-            'product_return' => 'nullable|string',
-            'online_payment' => 'nullable|string',
+            'cd' => 'nullable|numeric',
+            'product_return' => 'nullable|numeric',
+            'online_payment' => 'nullable|numeric',
             'amount_received' => 'nullable|numeric',
             'balance' => 'nullable|numeric',
             'remarks' => 'nullable|string',
@@ -144,11 +145,18 @@ class PartySaleController extends Controller
         $partySale->load(['manualItems.product']);
         $beats = Beat::all();
         $customers = Customer::with('beat')->get();
-        $products = Product::orderBy('name')->get(); 
-        return view('party_sales.edit', compact('partySale', 'beats', 'customers', 'products'));
+        $isManualBill = str_starts_with($partySale->bill_no, 'MAN');
+        $products = $isManualBill
+            ? Product::orderBy('name')->get()
+            : collect(); 
+        $hasExistingItems = ManualBillItem::where(
+                'party_sale_id',
+                $partySale->id
+            )->exists();
+        return view('party_sales.edit', compact('partySale', 'beats', 'customers', 'products', 'isManualBill', 'hasExistingItems'));
     }
 
-    public function update(Request $request, PartySale $partySale)
+    public function update(Request $request, PartySale $partySale, PaymentEntryService $paymentEntryService)
     {
         $validated = $request->validate([
             'beat_id' => 'required|exists:beats,id',
@@ -157,9 +165,9 @@ class PartySaleController extends Controller
             'bill_date' => 'nullable|date',
             'aging' => 'nullable|string',
             'amount' => 'nullable|numeric',
-            'cd' => 'nullable|string',
-            'product_return' => 'nullable|string',
-            'online_payment' => 'nullable|string',
+            'cd' => 'nullable|numeric',
+            'product_return' => 'nullable|numeric',
+            'online_payment' => 'nullable|numeric',
             'amount_received' => 'nullable|numeric',
             'balance' => 'nullable|numeric',
             'remarks' => 'nullable|string',
@@ -169,26 +177,37 @@ class PartySaleController extends Controller
             'items.*.box' => 'nullable|integer|min:0',
             'items.*.pcs' => 'nullable|integer|min:0',
         ]);
-        DB::transaction(function () use ($request, $partySale, $validated) {
+        DB::transaction(function () use ($request, $partySale, $validated, $paymentEntryService) {
+            $amount = (float)($validated['amount'] ?? 0);
+            $received = (float)($validated['amount_received'] ?? 0);
+            $online_payment = (float)($validated['online_payment'] ?? 0);
+            $product_return = (float)($validated['product_return'] ?? 0);
+            $validated['balance'] = max(0, $amount - $received - $online_payment - $product_return);
             $validated['modified'] = $request->has('modified');
             $partySale->update($validated);
-                    ManualBillItem::where('party_sale_id', $partySale->id)->delete();
+            $paymentEntryService->syncBalancesForPartySale($partySale->id);
+            $isManualBill = str_starts_with($partySale->bill_no, 'MAN');
+            if (!$isManualBill && $request->filled('items')) {
+                abort(403, 'Products cannot be modified for this bill');
+            }
+            if($isManualBill){
+                ManualBillItem::where('party_sale_id', $partySale->id)->delete();
+                $items = collect($request->items ?? [])
+                    ->filter(fn($i) => ((int)($i['box'] ?? 0) > 0) || ((int)($i['pcs'] ?? 0) > 0))
+                    ->map(fn($i) => [
+                        'party_sale_id' => $partySale->id,
+                        'product_id' => $i['product_id'],
+                        'box' => (int)($i['box'] ?? 0),
+                        'pcs' => (int)($i['pcs'] ?? 0),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ])
+                    ->values()
+                    ->all();
 
-            $items = collect($request->items ?? [])
-                ->filter(fn($i) => ((int)($i['box'] ?? 0) > 0) || ((int)($i['pcs'] ?? 0) > 0))
-                ->map(fn($i) => [
-                    'party_sale_id' => $partySale->id,
-                    'product_id' => $i['product_id'],
-                    'box' => (int)($i['box'] ?? 0),
-                    'pcs' => (int)($i['pcs'] ?? 0),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ])
-                ->values()
-                ->all();
-
-            if (!empty($items)) {
-                ManualBillItem::insert($items);
+                if (!empty($items)) {
+                    ManualBillItem::insert($items);
+                }
             }
         });
         return redirect()->route('party-sales.index')->with('success', 'Record updated successfully.');

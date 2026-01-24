@@ -390,7 +390,10 @@ class SalesmanController extends Controller
 
         // Beat filter
         if ($request->filled('beat_ids')) {
-            $query->whereIn('party_sales.beat_id', $request->beat_ids);
+            $beatIds = array_filter((array) $request->beat_ids, fn($v) => $v !== null && $v !== '');
+            if (count($beatIds)) {
+                $query->whereIn('party_sales.beat_id', $beatIds);
+            }
         }
 
         // Sorting

@@ -22,6 +22,8 @@
         <tr>
             <th>#</th>
             <th>Product Name</th>
+            <th>Box Amount</th>
+            <th>Piece Amount</th>
             <th width="180">Actions</th>
         </tr>
     </thead>
@@ -30,6 +32,8 @@
             <tr>
                 <td>{{ $loop->iteration }}</td>
                 <td>{{ $product->name }}</td>
+                <td>{{ $product->box_amount }}</td>
+                <td>{{ $product->piece_amount }}</td>
                 <td>
                     <a href="{{ route('products.edit', $product->id) }}" class="btn btn-sm btn-warning">
                         Edit
