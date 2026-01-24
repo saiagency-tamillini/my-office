@@ -2,6 +2,9 @@ svg.w-5.h-5 {
     width: 16px !important;
     height: 16px !important; 
 }
+.h-fit{
+    height: fit-content !important;
+}
 @media print {
 
   html, body {
