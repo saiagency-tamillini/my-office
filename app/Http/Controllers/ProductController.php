@@ -65,20 +65,26 @@ class ProductController extends Controller
     public function manual_stock_report(Request $request){
         $startDate = $request->start_date;
         $endDate   = $request->end_date;
+        $productId  = $request->product_id;
 
         $items = collect();
+        $totals = collect();
         $filtersApplied = false;
+        $products = Product::orderBy('name')->get();
 
         if ($startDate && $endDate) {
             $filtersApplied = true;
 
-            $items = ManualBillItem::with(['product', 'partySale.customer'])
+            $itemsQuery  = ManualBillItem::with(['product', 'partySale.customer'])
                 ->whereHas('partySale', function ($q) use ($startDate, $endDate) {
                     $q->whereBetween('bill_date', [$startDate, $endDate]);
-                })
-                ->orderBy(
-                    PartySale::select('bill_date')
-                        ->whereColumn('party_sales.id', 'manual_bill_items.party_sale_id')
+                });
+            if ($productId) {
+                $itemsQuery->where('product_id', $productId);
+            }
+            $items = $itemsQuery->orderBy(
+                PartySale::select('bill_date')
+                    ->whereColumn('party_sales.id', 'manual_bill_items.party_sale_id')
                 )
                 ->get();
             $totals = ManualBillItem::select('product_id',\DB::raw('SUM(box) as total_box'),
@@ -96,7 +102,9 @@ class ProductController extends Controller
             'startDate',
             'endDate',
             'filtersApplied',
-            'totals'
+            'products',
+            'totals',
+            'productId'
         ));
     }
 }

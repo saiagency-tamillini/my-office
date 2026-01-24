@@ -21,7 +21,18 @@
                     <input type="date" name="end_date" class="form-control"
                            value="{{ request('end_date') }}">
                 </div>
-
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Product</label>
+                    <select name="product_id" class="form-select">
+                        <option value="">All Products</option>
+                        @foreach($products as $product)
+                            <option value="{{ $product->id }}"
+                                {{ request('product_id') == $product->id ? 'selected' : '' }}>
+                                {{ $product->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
                 <div class="col-md-3 d-flex gap-2">
                     <button class="btn btn-primary w-100">Apply</button>
                     <a href="{{ route('manualStocks') }}"
