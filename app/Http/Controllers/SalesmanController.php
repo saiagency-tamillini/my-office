@@ -161,8 +161,11 @@ class SalesmanController extends Controller
         $query = $this->buildReportQuery($request);
         $sales = $query->get();
         $customers = Customer::with('beat')->get();
-        $selectedBeat = $request->filled('beat_id') ? Beat::find($request->beat_id) : null;
-        return view('pages.sales_report', compact('sales', 'salesmen', 'customers','beats','selectedBeat'));
+        $selectedBeats = collect();
+        if ($request->filled('beat_ids')) {
+            $selectedBeats = Beat::whereIn('id', (array) $request->beat_ids)->get();
+        }
+        return view('pages.sales_report', compact('sales', 'salesmen', 'customers','beats','selectedBeats'));
     }
 
     public function downloadReport(Request $request)

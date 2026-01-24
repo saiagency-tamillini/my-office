@@ -23,37 +23,40 @@
                             @endforeach
                         </select>
                     </div>
-                    {{-- <div class="col-12 col-md-2">
-                        <label class="form-label fw-semibold">Beat</label>
-                        <select name="beat_id" class="form-select">
-                            <option value="">Select Beat</option>
-                            @foreach($beats as $beat)
-                                <option value="{{ $beat->id }}"
-                                    {{ request('beat_id') == $beat->id ? 'selected' : '' }}>
-                                    {{ $beat->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div> --}}
                     <div class="col-12 col-md-4">
                         <label class="form-label fw-semibold">Beat:</label>
                         <div class="d-flex gap-2">
+                            @php
+                                $selectedBeats = array_filter((array) request('beat_ids'));
+                            @endphp
+
                             <div id="beat-container">
-                                <div class="d-flex align-items-center gap-2 beat-row">
-                                    <select name="beat_ids[]" class="form-select beat-select">
-                                        <option value="">-- Select Beat --</option>
-                                        @foreach($beats as $beat)
-                                            <option value="{{ $beat->id }}"
-                                                {{ in_array($beat->id, (array)request('beat_ids')) ? 'selected' : '' }}>
-                                                {{ $beat->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <button type="button" class="btn btn-outline-danger btn-sm remove-beat d-none">
-                                        ❌
-                                    </button>
-                                </div>
+                                @forelse($selectedBeats as $selectedBeat)
+                                    <div class="d-flex align-items-center gap-2 beat-row mt-2">
+                                        <select name="beat_ids[]" class="form-select beat-select">
+                                            <option value="">-- Select Beat --</option>
+                                            @foreach($beats as $beat)
+                                                <option value="{{ $beat->id }}"
+                                                    {{ $beat->id == $selectedBeat ? 'selected' : '' }}>
+                                                    {{ $beat->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <button type="button" class="btn btn-outline-danger btn-sm remove-beat">❌</button>
+                                    </div>
+                                @empty
+                                    <div class="d-flex align-items-center gap-2 beat-row">
+                                        <select name="beat_ids[]" class="form-select beat-select">
+                                            <option value="">-- Select Beat --</option>
+                                            @foreach($beats as $beat)
+                                                <option value="{{ $beat->id }}">{{ $beat->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="button" class="btn btn-outline-danger btn-sm remove-beat d-none">❌</button>
+                                    </div>
+                                @endforelse
                             </div>
+
 
                             <button type="button" class="btn btn-sm btn-outline-primary h-fit" id="add-beat">
                                 + Add More

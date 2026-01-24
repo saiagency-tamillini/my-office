@@ -21,18 +21,6 @@
                     <div class="d-flex flex-column p-3 border rounded bg-light">
                         <div class="d-flex gap-5 flex-wrap">
 
-                            <!-- Bill Date -->
-                            {{-- <div class="mb-2 d-flex h-fit gap-2 align-items-center">
-                                <label class="form-label">Bill Date:</label>
-                                <input
-                                    type="date"
-                                    name="bill_date"
-                                    class="form-control w-auto"
-                                    value="{{ request('bill_date') }}"
-                                    onclick="this.showPicker()"
-                                    onfocus="this.showPicker()">
-                            </div> --}}
-
                             <!-- Date Range -->
                             <div class="mb-2 d-flex h-fit gap-2 align-items-center flex-wrap">
                                 <label class="form-label fw-bold mb-0">Bill Date:</label>
@@ -77,23 +65,36 @@
                             <div>
                                 <label class="form-label fw-bold">Filter by Beat:</label>
                                 <div class="d-flex gap-2">
-                                    <div id="beat-container">
-                                        <div class="d-flex align-items-center gap-2 mb-2 beat-row">
-                                            <select name="beat_ids[]" class="form-select beat-select mb-2">
-                                                <option value="">-- Select Beat --</option>
-                                                @foreach($beats as $beat)
-                                                    <option value="{{ $beat->id }}"
-                                                        {{ in_array($beat->id, (array)request('beat_ids')) ? 'selected' : '' }}>
-                                                        {{ $beat->name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <button type="button" class="btn btn-outline-danger btn-sm remove-beat d-none">
-                                                ❌
-                                            </button>
-                                        </div>
-                                    </div>
+                                    @php
+                                        $filteredBeats = array_filter((array) request('beat_ids'));
+                                    @endphp
 
+                                    <div id="beat-container">
+                                        @forelse($filteredBeats as $filteredBeat)
+                                            <div class="d-flex align-items-center gap-2 beat-row mb-2">
+                                                <select name="beat_ids[]" class="form-select beat-select mb-2">
+                                                    <option value="">-- Select Beat --</option>
+                                                    @foreach($beats as $beat)
+                                                        <option value="{{ $beat->id }}"
+                                                            {{ $beat->id == $filteredBeat ? 'selected' : '' }}>
+                                                            {{ $beat->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <button type="button" class="btn btn-outline-danger btn-sm remove-beat">❌</button>
+                                            </div>
+                                        @empty
+                                            <div class="d-flex align-items-center gap-2 beat-row">
+                                                <select name="beat_ids[]" class="form-select beat-select">
+                                                    <option value="">-- Select Beat --</option>
+                                                    @foreach($beats as $beat)
+                                                        <option value="{{ $beat->id }}">{{ $beat->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <button type="button" class="btn btn-outline-danger btn-sm remove-beat d-none">❌</button>
+                                            </div>
+                                        @endforelse
+                                    </div>
                                     <button type="button" class="btn btn-sm btn-outline-primary h-fit" id="add-beat">
                                         + Add More
                                     </button>
@@ -145,10 +146,12 @@
         <form method="POST" action="{{ route('bulk-sale-update') }}">
             @csrf
             <div id="printArea">
-                @if($selectedBeat)
+                @if($selectedBeats->isNotEmpty())
                     <div class="text-center mb-3 print-beat-heading">
-                        <h4>{{ $selectedBeat->name }} ({{ request('bill_date', \Carbon\Carbon::today()->format('d-m-Y')) }})</h4>
-                        {{-- <p>Date: {{ request('bill_date', \Carbon\Carbon::today()->format('d-m-Y')) }}</p> --}}
+                        <h4>
+                            Beats:
+                            {{ $selectedBeats->pluck('name')->implode(', ') }}
+                        </h4>
                     </div>
                 @endif
                 <table class="table table-bordered">
