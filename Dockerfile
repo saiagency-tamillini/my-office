@@ -20,25 +20,34 @@ RUN apt-get update && apt-get install -y \
 RUN a2enmod rewrite
 
 # Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /var/www/html
 
+# ✅ NEW (recommended): copy composer files first for caching
+COPY composer.json composer.lock ./
+
+# ✅ NEW (required): install PHP dependencies (creates /vendor)
+RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
 # Copy application files
 COPY . /var/www/html
 
-# Fix permissions
-RUN chown -R www-data:www-data /var/www/html
+# ✅ NEW (recommended): Laravel needs these writable
+RUN chown -R www-data:www-data /var/www/html \
+ && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Apache document root
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
 # Update Apache config for document root
 RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' \
     /etc/apache2/sites-available/*.conf \
     /etc/apache2/apache2.conf
 
-EXPOSE 80
+# ✅ NEW (recommended): allow .htaccess (Laravel routing)
+RUN sed -ri 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
+EXPOSE 80
 CMD ["apache2-foreground"]
