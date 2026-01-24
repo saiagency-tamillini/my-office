@@ -1,0 +1,70 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+
+class AuthController extends Controller
+{
+     // Signup page
+    public function showRegister()
+    {
+        return view('auth.register');
+    }
+
+    // Handle signup
+    public function register(Request $request)
+    {
+        $data = $request->validate([
+            'name' => ['required','string','max:255'],
+            'username' => ['required','string','max:255','unique:users,username'],
+            'email' => ['required','email','max:255','unique:users,email'],
+            'password' => ['required','string','min:6','confirmed'],
+        ]);
+
+        $user = User::create([
+            'name' => $data['name'],
+            'username' => $data['username'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+        ]);
+
+        Auth::login($user);
+
+        return redirect()->route('home'); // change to your preferred page
+    }
+
+    // Handle login (from welcome page)
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'username' => ['required','string'], // username OR email
+            'password' => ['required','string'],
+        ]);
+
+        $username = $credentials['username'];
+        $password = $credentials['password'];
+
+        // allow login by username OR email
+        // $field = filter_var($username, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+        if (Auth::attempt(['username' => $username, 'password' => $password], true)) {
+            $request->session()->regenerate();
+            return redirect()->intended(route('fileUpload'));
+        }
+
+        return back()->withErrors([
+            'username' => 'Invalid credentials.',
+        ])->onlyInput('username');
+    }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect()->route('home');
+    }
+}

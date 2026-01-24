@@ -8,41 +8,49 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SalesmanController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\AuthController;
 
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
-Route::get('/file-upload', [App\Http\Controllers\fileController::CLASS, 'file_upload'])->name('fileUpload');
-Route::get('/salesman-report', [App\Http\Controllers\SalesmanController::CLASS, 'report_table'])->name('reportTable');
-Route::post('/upload-excel', [fileController::class, 'uploadExcel'])->name('upload.excel');
 
-Route::resource('beats', BeatController::class);
+Route::post('/login', [AuthController::class, 'login'])->name('login.perform');
 
-Route::post('bulk-update', [PartySaleController::class, 'bulkUpdate'])->name('bulk-update');
-Route::post('bulk-sale-update', [SalesmanController::class, 'bulkSaleUpdate'])->name('bulk-sale-update');
-Route::get('party-sales-download', [PartySaleController::class, 'download'])->name('party-sales.download');
-Route::resource('party-sales', PartySaleController::class);
+Route::middleware('auth')->group(function () {
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register.show');
+    Route::post('/register', [AuthController::class, 'register'])->name('register.perform');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::resource('customers', CustomerController::class);
-Route::resource('products', ProductController::class);
+    Route::get('/file-upload', [App\Http\Controllers\fileController::CLASS, 'file_upload'])->name('fileUpload');
+    Route::get('/salesman-report', [App\Http\Controllers\SalesmanController::CLASS, 'report_table'])->name('reportTable');
+    Route::post('/upload-excel', [fileController::class, 'uploadExcel'])->name('upload.excel');
 
-Route::get('/customers/{customer}/transactions', [CustomerController::class, 'transactions'])
-    ->name('customers.transactions');
+    Route::resource('beats', BeatController::class);
 
+    Route::post('bulk-update', [PartySaleController::class, 'bulkUpdate'])->name('bulk-update');
+    Route::post('bulk-sale-update', [SalesmanController::class, 'bulkSaleUpdate'])->name('bulk-sale-update');
+    Route::get('party-sales-download', [PartySaleController::class, 'download'])->name('party-sales.download');
+    Route::resource('party-sales', PartySaleController::class);
 
-// Show salesman table page
-Route::get('sales-man', [SalesmanController::class, 'index'])->name('salesman');
-Route::get('/sales-report/download', [SalesmanController::class, 'downloadReport'])->name('sales-report.download');
+    Route::resource('customers', CustomerController::class);
+    Route::resource('products', ProductController::class);
 
-// Show payment entries for a salesman (POST request from button)
-Route::post('sales-man', [SalesmanController::class, 'salesManDetails'])->name('salesman.reports');
-
-Route::get('/trip-sheet', [fileController::CLASS, 'trip_sheet_report'])->name('trip.report');
-Route::get('/credit-details-popup', [fileController::class, 'credit_popup']);
-
-Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
-Route::get('/collections/download', [CollectionController::class, 'download'])->name('collections.download');
-Route::get('/manual-stocks', [ProductController::class, 'manual_stock_report'])->name('manualStocks');
+    Route::get('/customers/{customer}/transactions', [CustomerController::class, 'transactions'])
+        ->name('customers.transactions');
 
 
+    // Show salesman table page
+    Route::get('sales-man', [SalesmanController::class, 'index'])->name('salesman');
+    Route::get('/sales-report/download', [SalesmanController::class, 'downloadReport'])->name('sales-report.download');
+
+    // Show payment entries for a salesman (POST request from button)
+    Route::post('sales-man', [SalesmanController::class, 'salesManDetails'])->name('salesman.reports');
+
+    Route::get('/trip-sheet', [fileController::CLASS, 'trip_sheet_report'])->name('trip.report');
+    Route::get('/credit-details-popup', [fileController::class, 'credit_popup']);
+
+    Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
+    Route::get('/collections/download', [CollectionController::class, 'download'])->name('collections.download');
+    Route::get('/manual-stocks', [ProductController::class, 'manual_stock_report'])->name('manualStocks');
+});
 
