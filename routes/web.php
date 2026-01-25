@@ -9,6 +9,7 @@ use App\Http\Controllers\SalesmanController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -54,5 +55,8 @@ Route::middleware(['auth', 'role:admin,super_admin'])->group(function () {
     Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
     Route::get('/collections/download', [CollectionController::class, 'download'])->name('collections.download');
     Route::get('/manual-stocks', [ProductController::class, 'manual_stock_report'])->name('manualStocks');
+});
+Route::middleware(['auth', 'role:super_admin'])->group(function () {
+    Route::resource('users', UserController::class);
 });
 

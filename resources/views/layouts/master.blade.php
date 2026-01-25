@@ -37,7 +37,7 @@
                         </a> --}}
 
                         @auth
-                            @if(in_array($role, ['admin', 'super_admin']))
+                            @if(is_admin())
                                 <a class="nav-link {{ request()->routeIs('salesman') ? 'active' : '' }}" href="{{ route('salesman') }}">
                                     <i class="bi bi-list-check"></i> Sales Man
                                 </a>
@@ -77,6 +77,14 @@
                                                 <i class="bi bi-list-check"></i> Products
                                             </a>
                                         </li>
+                                        @if(is_super_admin())
+                                            <li>
+                                                <a class="dropdown-item {{ request()->routeIs('users.*') ? 'active' : '' }}"
+                                                href="{{ route('users.index') }}">
+                                                    <i class="bi bi-list-check"></i> Users 
+                                                </a>
+                                            </li>
+                                        @endif
                                     </ul>
                                 </div>
 
@@ -142,14 +150,13 @@
                                 <i class="bi bi-person-circle me-2"></i>
                                 <span class="fw-semibold">{{ auth()->user()->name }}</span>
                             </span>
-                            @if(in_array($role, ['admin', 'super_admin']))
-                                {{-- Keep this only if logged-in users should create accounts; otherwise remove --}}
+                            {{-- @if(is_admin())
                                 <a class="btn btn-sm btn-outline-info d-flex align-items-center gap-1"
                                 href="{{ route('register.show') }}">
                                     <i class="bi bi-person-plus-fill"></i>
                                     <span>Create User</span>
                                 </a>
-                            @endif
+                            @endif --}}
                             <form method="POST" action="{{ route('logout') }}" class="m-0">
                                 @csrf
                                 <button type="submit" class="btn btn-sm btn-danger d-flex align-items-center gap-1">

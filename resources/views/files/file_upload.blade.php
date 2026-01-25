@@ -1,7 +1,7 @@
 @extends('layouts.master')
 @section('title', 'Excel Upload')
 @section('content')
-    @if(isset($role) && in_array($role, ['admin', 'super_admin']))
+    @if(is_admin())
         <div class="row justify-content-center">
             <div class="col-md-6">
 

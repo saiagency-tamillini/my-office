@@ -17,7 +17,7 @@
                         <p class="text-muted mb-4">
                             You are already logged in to <strong>Sai Agency</strong>.
                         </p>
-                        @if(isset($role) && !in_array($role, ['admin', 'super_admin']))
+                        @if(!is_admin())
                             <div class="alert alert-success">
                                 <div class="fw-semibold text-center">Login successful!</div>
                                 <div class="alert alert-info">
