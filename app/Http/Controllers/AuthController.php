@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -24,16 +25,14 @@ class AuthController extends Controller
             'email' => ['required','email','max:255','unique:users,email'],
             'password' => ['required','string','min:6','confirmed'],
         ]);
-
+        $guestRoleId = Role::where('name', 'guest')->value('id');
         $user = User::create([
             'name' => $data['name'],
             'username' => $data['username'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'role_id' => $guestRoleId,
         ]);
-
-        Auth::login($user);
-
         return redirect()->route('home'); // change to your preferred page
     }
 

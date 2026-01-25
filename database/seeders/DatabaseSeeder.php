@@ -20,7 +20,9 @@ class DatabaseSeeder extends Seeder
             BeatSeeder::class,
             CustomerSeeder::class,
             ProductsSeeder::class,
-        ]);
+            RoleSeeder::class, 
+            AssignDefaultRoleToUsersSeeder::class,
+            ]);
         // User::factory()->create([
         //     'name' => 'Test User',
         //     'email' => 'test@example.com',

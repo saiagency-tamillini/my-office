@@ -15,14 +15,16 @@ Route::get('/', function () {
 })->name('home');
 
 Route::post('/login', [AuthController::class, 'login'])->name('login.perform');
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register.show');
+Route::post('/register', [AuthController::class, 'register'])->name('register.perform');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register.show');
-    Route::post('/register', [AuthController::class, 'register'])->name('register.perform');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/file-upload', [App\Http\Controllers\fileController::class, 'file_upload'])->name('fileUpload');
+});
 
-    Route::get('/file-upload', [App\Http\Controllers\fileController::CLASS, 'file_upload'])->name('fileUpload');
-    Route::get('/salesman-report', [App\Http\Controllers\SalesmanController::CLASS, 'report_table'])->name('reportTable');
+Route::middleware(['auth', 'role:admin,super_admin'])->group(function () {
+    Route::get('/salesman-report', [App\Http\Controllers\SalesmanController::class, 'report_table'])->name('reportTable');
     Route::post('/upload-excel', [fileController::class, 'uploadExcel'])->name('upload.excel');
 
     Route::resource('beats', BeatController::class);
