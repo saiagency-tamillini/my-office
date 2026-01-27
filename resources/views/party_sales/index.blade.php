@@ -151,10 +151,10 @@
                             @php
                                 $billDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime($sale->bill_date)));
                                 $aging = $billDate->diffInDays(\Carbon\Carbon::today(), false);
-                                $totalProductReturn += $sale->product_return ?? 0;
-                                $totalOnlinePayment += $sale->online_payment ?? 0;
-                                $totalAmountReceived += $sale->amount_received ?? 0;
-                                $totalBalance += $sale->balance ?? 0;
+                                $totalProductReturn += (float) ($sale->product_return ?: 0);
+                                $totalOnlinePayment += (float) ($sale->online_payment ?: 0);
+                                $totalAmountReceived += (float) ($sale->amount_received ?: 0);
+                                $totalBalance += (float) ($sale->balance ?: 0);
                             @endphp
                             <tr class="{{$sale->first_entry ? 'bg-lite' : ''}}">
                                 <td>{{ $serial++ }}</td>
