@@ -36,7 +36,6 @@ class CollectionController extends Controller
 
         if ($filtersApplied) {
             $query = PaymentEntry::with(['customer', 'partySale.beat', 'partySale.customer']);
-
             if ($request->filled('salesman')) {
                 $query->whereHas('partySale.beat', function ($q) use ($request) {
                     $q->where('salesman', $request->salesman);
@@ -45,6 +44,11 @@ class CollectionController extends Controller
 
             if ($request->filled('date')) {
                 $query->whereDate('payment_date', $request->date);
+                if ($request->boolean('exclude_bill_date')) {
+                    $query->whereHas('partySale', function ($q) use ($request) {
+                        $q->whereDate('bill_date', '!=', $request->date);
+                    });
+                }
             }
 
             if ($request->filled('beat_ids')) {
@@ -55,7 +59,11 @@ class CollectionController extends Controller
                     });
                 }
             }
-
+            if ($request->filled('bill_date')) {
+                $query->whereHas('partySale', function ($q) use ($request) {
+                    $q->whereDate('bill_date', $request->bill_date);
+                });
+            }
             $entries = $query->latest('payment_date')
                 ->paginate($perPage)
                 ->withQueryString();

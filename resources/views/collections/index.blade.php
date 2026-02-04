@@ -67,6 +67,10 @@
                         <label class="form-label fw-semibold">Payment Date</label>
                         <input type="date" name="date" class="form-control" value="{{ request('date') }}">
                     </div>
+                    <div class="col-12 col-md-2">
+                        <label class="form-label fw-semibold">Bill Date</label>
+                        <input type="date" name="bill_date" class="form-control" value="{{ request('bill_date') }}">
+                    </div>
                     <div class="col-12 col-md-1">
                         <label class="form-label fw-semibold">Show</label>
                         <select name="per_page" class="form-select" id="perPage">
@@ -80,6 +84,21 @@
                     <div class="col-12 col-md-3 d-flex gap-2">
                         <button type="submit" class="btn btn-primary w-100">Apply</button>
                         <a href="{{ route('collections.index') }}" class="btn btn-outline-secondary w-100">Reset</a>
+                    </div>
+                    <div class="col-12 col-md-2">
+                        <div class="form-check mt-4">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                name="exclude_bill_date"
+                                value="1"
+                                id="excludeBillDate"
+                                {{ request('exclude_bill_date') ? 'checked' : '' }}
+                            >
+                            <label class="form-check-label fw-semibold" for="excludeBillDate">
+                                Exclude same Bill Date
+                            </label>
+                        </div>
                     </div>
                 </form>
             </div>
