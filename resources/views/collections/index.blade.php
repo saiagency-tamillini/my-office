@@ -10,27 +10,34 @@
         </div>
         <div class="card shadow-sm border-0 mb-4 hide-print">
             <div class="card-body">
-                <form id="filterForm" method="GET" action="{{ route('collections.index') }}" class="row g-3 align-items-end">
+                <form id="filterForm"
+                    method="GET"
+                    action="{{ route('collections.index') }}"
+                    class="row g-3 align-items-end">
 
+                    {{-- Salesman --}}
                     <div class="col-12 col-md-2">
                         <label class="form-label fw-semibold">Salesman</label>
                         <select name="salesman" class="form-select">
                             <option value="">Select Salesman</option>
                             @foreach($salesmen as $salesman)
-                                <option value="{{ $salesman }}" {{ request('salesman') == $salesman ? 'selected' : '' }}>
+                                <option value="{{ $salesman }}"
+                                    {{ request('salesman') == $salesman ? 'selected' : '' }}>
                                     {{ $salesman }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
+
+                    {{-- Beat --}}
                     <div class="col-12 col-md-4">
-                        <label class="form-label fw-semibold">Beat:</label>
+                        <label class="form-label fw-semibold">Beat</label>
                         <div class="d-flex gap-2">
                             @php
                                 $selectedBeats = array_filter((array) request('beat_ids'));
                             @endphp
 
-                            <div id="beat-container">
+                            <div id="beat-container" class="flex-grow-1">
                                 @forelse($selectedBeats as $selectedBeat)
                                     <div class="d-flex align-items-center gap-2 beat-row mt-2">
                                         <select name="beat_ids[]" class="form-select beat-select">
@@ -42,7 +49,10 @@
                                                 </option>
                                             @endforeach
                                         </select>
-                                        <button type="button" class="btn btn-outline-danger btn-sm remove-beat">❌</button>
+                                        <button type="button"
+                                                class="btn btn-outline-danger btn-sm remove-beat">
+                                            ❌
+                                        </button>
                                     </div>
                                 @empty
                                     <div class="d-flex align-items-center gap-2 beat-row">
@@ -52,57 +62,80 @@
                                                 <option value="{{ $beat->id }}">{{ $beat->name }}</option>
                                             @endforeach
                                         </select>
-                                        <button type="button" class="btn btn-outline-danger btn-sm remove-beat d-none">❌</button>
+                                        <button type="button"
+                                                class="btn btn-outline-danger btn-sm remove-beat d-none">
+                                            ❌
+                                        </button>
                                     </div>
                                 @endforelse
                             </div>
 
-
-                            <button type="button" class="btn btn-sm btn-outline-primary h-fit" id="add-beat">
-                                + Add More
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary h-fit"
+                                    id="add-beat">
+                                + Add
                             </button>
                         </div>
                     </div>
+
+                    {{-- Payment Date + Checkbox --}}
                     <div class="col-12 col-md-2">
                         <label class="form-label fw-semibold">Payment Date</label>
-                        <input type="date" name="date" class="form-control" value="{{ request('date') }}">
+                        <input type="date"
+                            name="date"
+                            class="form-control"
+                            value="{{ request('date') }}">
+
+                        <div class="form-check mt-2">
+                            <input class="form-check-input"
+                                type="checkbox"
+                                name="include_party_sale_collection"
+                                value="1"
+                                id="include_party_sale_collection"
+                                {{ request('include_party_sale_collection') ? 'checked' : '' }}>
+                            <label class="form-check-label small" for="include_party_sale_collection">
+                                Include Party Sale
+                            </label>
+                        </div>
                     </div>
+
+                    {{-- Bill Date --}}
                     <div class="col-12 col-md-2">
                         <label class="form-label fw-semibold">Bill Date</label>
-                        <input type="date" name="bill_date" class="form-control" value="{{ request('bill_date') }}">
+                        <input type="date"
+                            name="bill_date"
+                            class="form-control"
+                            value="{{ request('bill_date') }}">
                     </div>
+
+                    {{-- Per Page --}}
                     <div class="col-12 col-md-1">
                         <label class="form-label fw-semibold">Show</label>
                         <select name="per_page" class="form-select" id="perPage">
                             @foreach([10,25,50,100,200,500] as $n)
-                                <option value="{{ $n }}" {{ request('per_page', 25) == $n ? 'selected' : '' }}>
+                                <option value="{{ $n }}"
+                                    {{ request('per_page', 25) == $n ? 'selected' : '' }}>
                                     {{ $n }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
+
+                    {{-- Actions --}}
                     <div class="col-12 col-md-3 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary w-100">Apply</button>
-                        <a href="{{ route('collections.index') }}" class="btn btn-outline-secondary w-100">Reset</a>
+                        <button type="submit" class="btn btn-primary w-100">
+                            Apply
+                        </button>
+                        <a href="{{ route('collections.index') }}"
+                        class="btn btn-outline-secondary w-100">
+                            Reset
+                        </a>
                     </div>
-                    <div class="col-12 col-md-2">
-                        <div class="form-check mt-4">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                name="exclude_bill_date"
-                                value="1"
-                                id="excludeBillDate"
-                                {{ request('exclude_bill_date') ? 'checked' : '' }}
-                            >
-                            <label class="form-check-label fw-semibold" for="excludeBillDate">
-                                Exclude same Bill Date
-                            </label>
-                        </div>
-                    </div>
+
                 </form>
             </div>
         </div>
+
 
         @if($filtersApplied)
             <div class="card shadow-sm border-0">
@@ -135,6 +168,7 @@
                                 <table class="table table-hover table-striped align-middle mb-0">
                                     <thead class="table-light">
                                         <tr>
+                                            <th class="hide-print">Remove</th>
                                             <th>#</th>
                                             <th>Payment Date</th>
                                             <th>Salesman</th>
@@ -180,18 +214,23 @@
                                             @endphp
 
                                             <tr>
+                                                <td class="hide-print">
+                                                    <button type="button" class="btn btn-sm btn-danger remove-row">
+                                                        Remove
+                                                    </button>
+                                                </td>
                                                 <td class="text-muted">{{ $entries->firstItem() + $i }}</td>
                                                 <td class="fw-semibold">{{ optional($entry->payment_date)->format('d M Y') ?? '-' }}</td>
                                                 <td>{{ $salesmanName ?? '-' }}</td>
                                                 <td class="text-truncate" style="max-width: 220px;">{{ $customerName }}</td>
                                                 <td>{{ $entry->bill_no ?? '-' }}</td>
 
-                                                <td class="text-end">{{ number_format((float)($entry->amount ?? 0), 2) }}</td>
-                                                <td class="text-end">{{ number_format((float)($entry->cd ?? 0), 2) }}</td>
-                                                <td class="text-end">{{ number_format((float)($entry->product_return ?? 0), 2) }}</td>
-                                                <td class="text-end">{{ number_format((float)($entry->online_payment ?? 0), 2) }}</td>
-                                                <td class="text-end fw-semibold">{{ number_format((float)($entry->amount_received ?? 0), 2) }}</td>
-                                                <td class="text-end fw-semibold">{{ number_format((float)($entry->balance ?? 0), 2) }}</td>
+                                                <td class="text-end amount">{{ number_format((float)($entry->amount ?? 0), 2) }}</td>
+                                                <td class="text-end cd">{{ number_format((float)($entry->cd ?? 0), 2) }}</td>
+                                                <td class="text-end return">{{ number_format((float)($entry->product_return ?? 0), 2) }}</td>
+                                                <td class="text-end online">{{ number_format((float)($entry->online_payment ?? 0), 2) }}</td>
+                                                <td class="text-end fw-semibold received">{{ number_format((float)($entry->amount_received ?? 0), 2) }}</td>
+                                                <td class="text-end fw-semibold balance">{{ number_format((float)($entry->balance ?? 0), 2) }}</td>
 
                                                 <td class="text-truncate hide-print" style="max-width: 240px;">{{ $entry->remarks ?? '-' }}</td>
 
@@ -204,15 +243,73 @@
 
                                     <tfoot class="table-light">
                                         <tr>
+                                            <th class="hide-print"></th>
                                             <th colspan="5" class="text-end">Totals:</th>
-                                            <th class="text-end">{{ number_format($totalAmount, 2) }}</th>
+                                            <th class="text-end" id="totalAmount">{{ number_format($totalAmount, 2) }}</th>
                                             <th colspan="3"></th>
-                                            <th class="text-end">{{ number_format($totalReceived, 2) }}</th>
-                                            <th class="text-end">{{ number_format($totalBalance, 2) }}</th>
+                                            <th class="text-end" id="totalReceived">{{ number_format($totalReceived, 2) }}</th>
+                                            <th class="text-end" id="totalBalance">{{ number_format($totalBalance, 2) }}</th>
                                             <th class="hide-print"colspan="2"></th>
                                         </tr>
                                     </tfoot>
                                 </table>
+                                <div id="denominationSection" class="card shadow-sm border-0 mt-4" style="max-width: 300px; margin: 0 auto;">
+                                    <div class="card-header bg-white fw-semibold">
+                                        Denomination
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered mb-0" id="denominationTable">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Denomination</th>
+                                                        <th width="150">No's</th>
+                                                        <th width="150" class="text-end">Total</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @php
+                                                        $denominations = [500, 200, 100, 50, 20, 10];
+                                                    @endphp
+
+                                                    @foreach($denominations as $note)
+                                                        <tr>
+                                                            <td>₹ {{ $note }}</td>
+                                                            <td>
+                                                                <input type="number"
+                                                                    min="0"
+                                                                    class="form-control denom-input"
+                                                                    data-value="{{ $note }}"
+                                                                    placeholder="0">
+                                                            </td>
+                                                            <td class="text-end denom-total">0.00</td>
+                                                        </tr>
+                                                    @endforeach
+
+                                                    {{-- Coins --}}
+                                                    <tr>
+                                                        <td>Coins</td>
+                                                        <td>
+                                                            <input type="number"
+                                                                min="0"
+                                                                class="form-control denom-input"
+                                                                data-value="1"
+                                                                placeholder="0">
+                                                        </td>
+                                                        <td class="text-end denom-total">0.00</td>
+                                                    </tr>
+                                                </tbody>
+
+                                                <tfoot class="table-light">
+                                                    <tr>
+                                                        <th colspan="2" class="text-end">Overall Total:</th>
+                                                        <th class="text-end fw-bold" id="overallDenomTotal">0.00</th>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="p-3 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
@@ -234,6 +331,8 @@
 
         @endif
     </div>
+    
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('filterForm');
@@ -315,5 +414,63 @@
                 refreshOptions();
             }
         });
+        function recalculateTotals() {
+            let totalAmount = 0;
+            let totalReceived = 0;
+            let totalBalance = 0;
+
+            document.querySelectorAll('#printArea tbody tr').forEach(row => {
+                const amount = parseFloat(row.querySelector('.amount')?.innerText.replace(/,/g, '') || 0);
+                const received = parseFloat(row.querySelector('.received')?.innerText.replace(/,/g, '') || 0);
+                const balance = parseFloat(row.querySelector('.balance')?.innerText.replace(/,/g, '') || 0);
+
+                totalAmount += amount;
+                totalReceived += received;
+                totalBalance += balance;
+            });
+
+            document.getElementById('totalAmount').innerText = totalAmount.toFixed(2);
+            document.getElementById('totalReceived').innerText = totalReceived.toFixed(2);
+            document.getElementById('totalBalance').innerText = totalBalance.toFixed(2);
+        }
+
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-row')) {
+                const row = e.target.closest('tr');
+                if (row) {
+                    row.remove();
+                    recalculateTotals(); 
+                }
+            }
+        });
+
+        function calculateDenomination() {
+            let overallTotal = 0;
+
+            document.querySelectorAll('#denominationTable tbody tr').forEach(row => {
+                const input = row.querySelector('.denom-input');
+                const totalCell = row.querySelector('.denom-total');
+
+                if (!input) return;
+
+                const value = parseFloat(input.dataset.value || 0);
+                const count = parseFloat(input.value || 0);
+
+                const rowTotal = value * count;
+                totalCell.innerText = rowTotal.toFixed(2);
+
+                overallTotal += rowTotal;
+            });
+
+            document.getElementById('overallDenomTotal').innerText = overallTotal.toFixed(2);
+        }
+
+        document.addEventListener('input', function (e) {
+            if (e.target.classList.contains('denom-input')) {
+                calculateDenomination();
+            }
+        });
+
+
     </script>
 @endsection

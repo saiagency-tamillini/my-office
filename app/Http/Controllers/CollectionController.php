@@ -44,11 +44,10 @@ class CollectionController extends Controller
 
             if ($request->filled('date')) {
                 $query->whereDate('payment_date', $request->date);
-                if ($request->boolean('exclude_bill_date')) {
-                    $query->whereHas('partySale', function ($q) use ($request) {
-                        $q->whereDate('bill_date', '!=', $request->date);
-                    });
-                }
+            }
+
+            if (!$request->boolean('include_party_sale_collection')) {
+                $query->where('party_sale_payment', false);
             }
 
             if ($request->filled('beat_ids')) {

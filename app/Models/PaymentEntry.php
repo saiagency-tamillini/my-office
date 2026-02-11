@@ -25,6 +25,7 @@ class PaymentEntry extends Model
         'balance',
         'remarks',
         'status',
+        'party_sale_payment',
     ];
 
     protected $casts = [

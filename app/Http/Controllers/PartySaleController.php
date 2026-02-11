@@ -380,6 +380,7 @@ class PartySaleController extends Controller
                     'balance'          => $sale->balance,
                     'remarks'          => $sale->remarks,
                     'status'           => $sale->balance == 0 ? 'complete' : 'pending',
+                    'party_sale_payment' => true,
                 ]);
             }
         }

@@ -12,7 +12,7 @@
 
         <div class="mb-3">
             <label>Customer Name</label>
-            <select name="customer_id" class="form-control customer-select">
+            <select name="customer_id" class="form-control customer-select" required>
                 @foreach($customers as $customer)
                     <option value="{{ $customer->id }}" {{ (isset($partySale) && $partySale->customer_id==$customer->id) ? 'selected' : '' }}>
                         {{ $customer->name.' ('.$customer->beat->name.')'}}
@@ -24,7 +24,7 @@
         <div class="mb-3">
             <label>Bill Date</label>
             <input type="date" name="bill_date" class="form-control"
-                value="{{ isset($partySale->bill_date) ? $partySale->bill_date->format('Y-m-d') : '' }}">
+                value="{{ isset($partySale->bill_date) ? $partySale->bill_date->format('Y-m-d') : '' }}" required>
         </div>
 
         <div class="mb-3"><label>Amount</label><input type="number" step="0.01" name="amount" class="form-control" value="{{ $partySale->amount ?? old('amount') }}"></div>
