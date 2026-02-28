@@ -238,16 +238,20 @@ class fileController extends Controller
         if ($request->has('sort') && in_array($request->sort, ['asc', 'desc'])) {
             $query->orderBy('customer_name', $request->sort);
         }
-        if ($request->filled('beat_id')) {
-            $query->where('party_sales.beat_id', $request->beat_id);
+        // Beat filter
+        if ($request->filled('beat_ids')) {
+            $beatIds = array_filter((array) $request->beat_ids, fn($v) => $v !== null && $v !== '');
+            if (count($beatIds)) {
+                $query->whereIn('party_sales.beat_id', $beatIds);
+            }
         }
         $sales = $query->get();
         $customers = Customer::with('beat')->get();
-        $selectedBeat = null;
-        if ($request->filled('beat_id')) {
-            $selectedBeat = Beat::find($request->beat_id);
+        $selectedBeats = collect();
+        if ($request->filled('beat_ids')) {
+            $selectedBeats = Beat::whereIn('id', (array) $request->beat_ids)->get();
         }
-        return view('pages.trip_report', compact('sales', 'salesmen', 'customers','beats','selectedBeat','is_today_report'));
+        return view('pages.trip_report', compact('sales', 'salesmen', 'customers','beats','selectedBeats','is_today_report'));
     }
 
     public function credit_popup(Request $request)

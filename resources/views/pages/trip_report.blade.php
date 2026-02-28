@@ -11,42 +11,134 @@
                 Credit Details
             </button>
         </div>
-        <form method="GET" action="{{ route('trip.report') }}" class="mb-3">
-            <div class="mb-2">
-                <label class="form-label">Bill Date:</label>
-                <input type="date"
-                    name="bill_date"
-                    class="form-control"
-                    value="{{ request('bill_date', \Carbon\Carbon::today()->format('Y-m-d')) }}">
-            </div>
-            <div class="mb-2">Filter by Salesman:</div>
-            <div class="d-flex flex-wrap mb-2">
-                @foreach($salesmen as $salesman)
-                    <div class="form-check me-3">
-                        <input class="form-check-input" type="checkbox" name="salesmen[]" 
-                            value="{{ $salesman }}" id="salesman_{{ $loop->index }}"
-                            {{ is_array(request('salesmen')) && in_array($salesman, request('salesmen')) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="salesman_{{ $loop->index }}">
-                            {{ $salesman }}
-                        </label>
+
+        <div class="mb-3">
+
+            <!-- Filter Header -->
+            <button class="btn btn-outline-primary w-100 text-start d-flex justify-content-between align-items-center"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#filterPanel"
+                    aria-expanded="false"
+                    aria-controls="filterPanel">
+                Filters
+                <i class="bi bi-chevron-down" id="filterIcon"></i>
+            </button>
+
+            <!-- Collapsible Filters -->
+            <div class="collapse mt-2" id="filterPanel">
+                <form method="GET" action="{{ route('trip.report') }}">
+
+                    <div class="d-flex flex-column p-3 border rounded bg-light">
+
+                        <div class="d-flex gap-5 flex-wrap">
+
+                            <!-- Single Bill Date -->
+                            <div class="mb-2 d-flex gap-2 align-items-start flex-wrap">
+                                <label class="form-label fw-bold mb-0">Bill Date:</label>
+
+                                <input type="date"
+                                    name="bill_date"
+                                    class="form-control w-auto"
+                                    value="{{ request('bill_date', \Carbon\Carbon::today()->format('Y-m-d')) }}"
+                                    onclick="this.showPicker()"
+                                    onfocus="this.showPicker()">
+                            </div>
+
+                            <!-- Salesman Filter -->
+                            <div class="d-flex flex-column mb-2">
+                                <div class="fw-bold">Filter by Salesman:</div>
+
+                                @foreach($salesmen as $salesman)
+                                    <div class="form-check">
+                                        <input class="form-check-input border border-dark"
+                                            type="checkbox"
+                                            name="salesmen[]"
+                                            value="{{ $salesman }}"
+                                            id="salesman_{{ $loop->index }}"
+                                            {{ is_array(request('salesmen')) && in_array($salesman, request('salesmen')) ? 'checked' : '' }}>
+
+                                        <label class="form-check-label"
+                                            for="salesman_{{ $loop->index }}">
+                                            {{ $salesman }}
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <!-- Beat Filter -->
+                            <div>
+                                <label class="form-label fw-bold">Filter by Beat:</label>
+
+                                <div class="d-flex gap-2">
+
+                                    @php
+                                        $filteredBeats = array_filter((array) request('beat_ids'));
+                                    @endphp
+
+                                    <div id="beat-container">
+
+                                        @forelse($filteredBeats as $filteredBeat)
+                                            <div class="d-flex align-items-center gap-2 beat-row mb-2">
+                                                <select name="beat_ids[]" class="form-select beat-select">
+                                                    <option value="">-- Select Beat --</option>
+                                                    @foreach($beats as $beat)
+                                                        <option value="{{ $beat->id }}"
+                                                            {{ $beat->id == $filteredBeat ? 'selected' : '' }}>
+                                                            {{ $beat->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+
+                                                <button type="button"
+                                                        class="btn btn-outline-danger btn-sm remove-beat">
+                                                    ❌
+                                                </button>
+                                            </div>
+                                        @empty
+                                            <div class="d-flex align-items-center gap-2 beat-row">
+                                                <select name="beat_ids[]" class="form-select beat-select">
+                                                    <option value="">-- Select Beat --</option>
+                                                    @foreach($beats as $beat)
+                                                        <option value="{{ $beat->id }}">
+                                                            {{ $beat->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+
+                                                <button type="button"
+                                                        class="btn btn-outline-danger btn-sm remove-beat d-none">
+                                                    ❌
+                                                </button>
+                                            </div>
+                                        @endforelse
+
+                                    </div>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary h-fit"
+                                            id="add-beat">
+                                        + Add More
+                                    </button>
+
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Filter Buttons -->
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary me-2">Filter</button>
+                            <a href="{{ route('trip.report') }}" class="btn btn-secondary">Reset</a>
+                        </div>
+
                     </div>
-                @endforeach
+                </form>
             </div>
-            <div class="mb-2">
-                <label class="form-label">Filter by Beat:</label>
-                <select name="beat_id" class="form-select">
-                    <option value="">-- All Beats --</option>
-                    @foreach($beats as $beat)
-                        <option value="{{ $beat->id }}"
-                            {{ request('beat_id') == $beat->id ? 'selected' : '' }}>
-                            {{ $beat->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary me-2">Filter</button>
-            <a href="{{ route('trip.report') }}" class="btn btn-secondary">Reset</a>
-        </form>
+        </div>
+
+
+
         @if($sales->isNotEmpty())
             <div class="mt-2">
                 <a href="{{ route('party-sales.download', request()->all()) }}" class="btn btn-success mb-3">Download Excel</a>
@@ -69,15 +161,19 @@
             $serial = 1;
         @endphp
         <div id="printArea">
-            @if($selectedBeat)
+            @if($selectedBeats->isNotEmpty())
                 <div class="text-center mb-3 print-beat-heading">
-                    <h4>{{ $selectedBeat->name }} ({{ request('bill_date', \Carbon\Carbon::today()->format('d-m-Y')) }})</h4>
+                    <h4>
+                        Beats:
+                        {{ $selectedBeats->pluck('name')->implode(', ') }}
+                    </h4>
                 </div>
             @endif
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>S.No</th>
+                        <th class="hide-print"></th>
+                        {{-- <th>S.No</th> --}}
                         <th style="min-width: 280px;">
                             <a href="{{ route('trip.report', array_merge(request()->all(), ['sort' => $sort])) }}">
                                 Customer Name
@@ -112,7 +208,7 @@
                             </tr>
                             @php
                                 $currentSalesman = $sale->beat->salesman;
-                                $serial = 1;
+                                // $serial = 1;
                             @endphp
                         @endif
                         @php
@@ -124,7 +220,12 @@
                             $totalBalance += $sale->balance ?? 0;
                         @endphp
                         <tr>
-                            <td>{{ $serial++ }}</td>
+                            <td class="hide-print">
+                                <button type="button" class="btn btn-sm btn-danger remove-row">
+                                    ❌
+                                </button>
+                            </td>
+                            {{-- <td>{{ $serial++ }}</td> --}}
                             <td class="customer-name">
                                 <select name="sales[{{ $sale->id }}][customer_id]" class="form-control w-100" disabled>
                                     @foreach($customers as $customer)
@@ -359,7 +460,9 @@
                 const formattedDate = formatDate(item.date);
                 const agingDays = calculateAging(item.date);
                 tr.innerHTML = `
-                    <td>*</td>
+                    <td class="hide-print"> 
+                        <button type="button" class="btn btn-sm btn-danger remove-credit">❌</button>
+                    </td>
                     <td class="customer-name">${item.customer}</td>
                     <td>${item.bill}</td>
                     <td>${formattedDate}</td>
@@ -372,11 +475,6 @@
                     <td class="hide-print">${item.balance}</td>
                     <td class="hide-print">-</td>
                     <td class="hide-print">Credit Entry</td>
-                    <td class="hide-print">
-                        <button class="btn btn-sm btn-danger remove-credit">
-                            Remove
-                        </button>
-                    </td>
                 `;
 
                 tbody.querySelector('.credit-header').after(tr);
@@ -467,6 +565,73 @@
                 if (icon) icon.textContent = sortDirection === 'asc' ? '⬆' : '⬇';
 
                 rows.forEach(row => tbody.appendChild(row));
+            }
+        });
+        const beats = @json($beats);
+        const beatContainer = document.getElementById('beat-container');
+        const addBeatBtn = document.getElementById('add-beat');
+        function getSelectedBeats() {
+            return Array.from(document.querySelectorAll('.beat-select'))
+                .map(select => select.value)
+                .filter(val => val !== "");
+        }
+        function refreshOptions() {
+            const selected = getSelectedBeats();
+
+            document.querySelectorAll('.beat-select').forEach(select => {
+                const current = select.value;
+                select.innerHTML = '<option value="">-- Select Beat --</option>';
+
+                beats.forEach(beat => {
+                    if (!selected.includes(String(beat.id)) || String(beat.id) === current) {
+                        const option = document.createElement('option');
+                        option.value = beat.id;
+                        option.text = beat.name;
+                        option.selected = String(beat.id) === current;
+                        select.appendChild(option);
+                    }
+                });
+            });
+        }
+        function createBeatRow() {
+            const row = document.createElement('div');
+            row.className = 'd-flex align-items-center gap-2 mb-2 beat-row';
+
+            row.innerHTML = `
+                <select name="beat_ids[]" class="form-select beat-select">
+                    <option value="">-- Select Beat --</option>
+                </select>
+                <button type="button" class="btn btn-outline-danger btn-sm remove-beat">
+                    ❌
+                </button>
+            `;
+
+            beatContainer.appendChild(row);
+            refreshOptions();
+        }
+
+        addBeatBtn.addEventListener('click', () => {
+            createBeatRow();
+        });
+        // Change event → refresh options
+        beatContainer.addEventListener('change', function (e) {
+            if (e.target.classList.contains('beat-select')) {
+                refreshOptions();
+            }
+        });
+
+        // Remove row
+        beatContainer.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-beat')) {
+                e.target.closest('.beat-row').remove();
+                refreshOptions();
+            }
+        });
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-row')) {
+                const row = e.target.closest('tr');
+                row.remove();
+                updateTotalBalance(); 
             }
         });
     </script>
