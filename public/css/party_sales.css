@@ -95,7 +95,7 @@ table td input[type="number"] {
     }
 
     /* Aging column – narrow */
-    .aging-col {
+    .aging-col, .cd-col {
         width: 35px !important;
         max-width: 35px !important;
         min-width: 35px !important;
@@ -110,7 +110,7 @@ table td input[type="number"] {
         white-space: nowrap !important;
         text-align: center;
     }
-    .balance-col {
+    .balance-col, .total-col {
         width: 85px !important;
         min-width: 85px !important;
         max-width: 85px !important;
@@ -149,6 +149,9 @@ table td input[type="number"] {
         border: 1px solid #000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+    }
+    .bold-font{
+        font-weight: bold;
     }
     /* .salesman-row {
         page-break-before: always;

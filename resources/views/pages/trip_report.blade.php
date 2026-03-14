@@ -173,7 +173,6 @@
                 <thead>
                     <tr>
                         <th class="hide-print"></th>
-                        {{-- <th>S.No</th> --}}
                         <th style="min-width: 280px;">
                             <a href="{{ route('trip.report', array_merge(request()->all(), ['sort' => $sort])) }}">
                                 Customer Name
@@ -181,8 +180,8 @@
                             </a>
                         </th>
                         <th>Bill No</th>
-                        <th>Bill Date</th>
-                        <th>Aging<br>(days)</th>
+                        <th class="hide-print">Bill Date</th>
+                        <th class="hide-print">Aging<br>(days)</th>
                         <th>Amount</th>
                         <th>CD</th>
                         <th>Product Return</th>
@@ -196,9 +195,6 @@
                 </thead>
                 <tbody id="tripSheetBody">
                     @php
-                        // $totalProductReturn = 0;
-                        // $totalOnlinePayment = 0;
-                        // $totalAmountReceived = 0;
                         $totalBalance = 0;
                     @endphp
                     @forelse($sales as $sale)
@@ -208,15 +204,11 @@
                             </tr>
                             @php
                                 $currentSalesman = $sale->beat->salesman;
-                                // $serial = 1;
                             @endphp
                         @endif
                         @php
                             $billDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime($sale->bill_date)));
                             $aging = $billDate->diffInDays(\Carbon\Carbon::today(), false);
-                            // $totalProductReturn += $sale->product_return ?? 0;
-                            // $totalOnlinePayment += $sale->online_payment ?? 0;
-                            // $totalAmountReceived += $sale->amount_received ?? 0;
                             $totalBalance += $sale->balance ?? 0;
                         @endphp
                         <tr>
@@ -239,18 +231,18 @@
                                     <span class="badge bg-success ms-2">Modified</span>
                                 @endif
                             </td>
-                            <td>{{ $sale->bill_no }}</td>
-                            <td class="date-col">{{ $sale->bill_date ? \Carbon\Carbon::parse($sale->bill_date)->format('d-m-Y') : '' }}
+                            <td class="bold-font">{{ $sale->bill_no }}</td>
+                            <td class="date-col hide-print">{{ $sale->bill_date ? \Carbon\Carbon::parse($sale->bill_date)->format('d-m-Y') : '' }}
                                 <input type="hidden"
                                     name="sales[{{ $sale->id }}][bill_date]"
                                     value="{{ $sale->bill_date }}">
                             </td>
-                            <td class="aging-col">{{ $aging }}</td>
-                            <td>{{ $sale->balance  }}</td>
-                            <td>{{  $sale->cd }}</td>
+                            <td class="aging-col hide-print">{{ $aging }}</td>
+                            <td class="bold-font">{{ $sale->balance  }}</td>
+                            <td class="cd-col">{{  $sale->cd }}</td>
                             <td></td>
                             <td></td>
-                            <td></td>
+                            <td class="total-col"></td>
                             <td class="hide-print balance-col">
                                 <input type="number" class="form-control balance" 
                                     style="width: 100px;" 
@@ -291,6 +283,47 @@
                     </tfoot>
                 @endif
             </table>
+            <div id="vehicle-entry" class="card shadow-sm mt-4 mx-auto" style="max-width:380px;">
+                <div class="card-header fw-bold text-center">
+                    Vehicle Details
+                </div>
+
+                <div class="card-body p-2">
+                    <table class="table table-sm table-bordered align-middle mb-0">
+                        <tbody>
+
+                            <tr>
+                                <td class="fw-semibold text-nowrap">Start KM</td>
+                                <td>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" min="0" class="form-control km-input" >
+                                        <span class="">KM</span>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="fw-semibold text-nowrap">End KM</td>
+                                <td>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" min="0" class="form-control km-input">
+                                        <span class="">KM</span>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="fw-semibold text-nowrap">Book No</td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm">
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
         </div>
     </div>
 @endsection
@@ -389,31 +422,6 @@
                     .forEach(cb => cb.checked = e.target.checked);
             }
         });
-        // document.getElementById('addSelectedCredits').addEventListener('click', function () {
-        //     console.log('entry');
-
-        //     let selected = [];
-
-        //     document.querySelectorAll('.credit-checkbox:checked').forEach(cb => {
-        //         selected.push({
-        //             id: cb.value,
-        //             customer: cb.dataset.customer,
-        //             bill: cb.dataset.bill,
-        //             balance: cb.dataset.balance
-        //         });
-        //     });
-
-        //     if (selected.length === 0) {
-        //         alert('Please select at least one record');
-        //         return;
-        //     }
-
-        //     console.log(selected); 
-
-        //     bootstrap.Modal.getInstance(
-        //         document.getElementById('creditModal')
-        //     ).hide();
-        // });
     </script>
 
     <script>
@@ -435,6 +443,7 @@
                 alert('Please select at least one record');
                 return;
             }
+            selected.sort((a, b) => b.customer.localeCompare(a.customer));
 
             const tbody = document.getElementById('tripSheetBody');
 
@@ -464,14 +473,14 @@
                         <button type="button" class="btn btn-sm btn-danger remove-credit">❌</button>
                     </td>
                     <td class="customer-name">${item.customer}</td>
-                    <td>${item.bill}</td>
-                    <td>${formattedDate}</td>
-                    <td class="aging-col">${agingDays}</td>
-                    <td>${item.balance}</td>
+                    <td class="bold-font">${item.bill}</td>
+                    <td class="hide-print">${formattedDate}</td>
+                    <td class="aging-col hide-print">${agingDays}</td>
+                    <td class="bold-font">${item.balance}</td>
+                    <td class="cd-col"></td>
                     <td></td>
                     <td></td>
-                    <td></td>
-                    <td></td>
+                    <td class="total-col"></td>
                     <td class="hide-print">${item.balance}</td>
                     <td class="hide-print">-</td>
                     <td class="hide-print">Credit Entry</td>
@@ -513,12 +522,11 @@
 
             document.querySelectorAll('#tripSheetBody tr').forEach(row => {
 
-                // Skip salesman / credit headers
                 if (row.classList.contains('salesman-row')) return;
 
-                // Normal rows have balance input or balance cell
                 const balanceInput = row.querySelector('input.balance');
-                const balanceCell  = row.querySelector('td.hide-print');
+                // const balanceCell  = row.querySelector('td.hide-print');
+                const balanceCell  = row.children[10];
 
                 if (balanceInput) {
                     total += parseFloat(balanceInput.value || 0);
@@ -613,7 +621,6 @@
         addBeatBtn.addEventListener('click', () => {
             createBeatRow();
         });
-        // Change event → refresh options
         beatContainer.addEventListener('change', function (e) {
             if (e.target.classList.contains('beat-select')) {
                 refreshOptions();
