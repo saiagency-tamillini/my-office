@@ -51,7 +51,7 @@
                                 </a>
 
                                 <div class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle {{ request()->routeIs('beats.*') || request()->routeIs('customers.*') || request()->routeIs('products.*') ? 'active' : '' }}"
+                                    <a class="nav-link dropdown-toggle {{ request()->routeIs('beats.*') || request()->routeIs('routes.*') || request()->routeIs('customers.*') || request()->routeIs('products.*') ? 'active' : '' }}"
                                     href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="bi bi-people-fill"></i> Customers
                                     </a>
@@ -61,6 +61,13 @@
                                             <a class="dropdown-item {{ request()->routeIs('beats.*') ? 'active' : '' }}"
                                             href="{{ route('beats.index') }}">
                                                 <i class="bi bi-list-check"></i> Beats
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item {{ request()->routeIs('routes.*') ? 'active' : '' }}"
+                                            href="{{ route('routes.index') }}">
+                                                <i class="bi bi-signpost"></i> Routes
                                             </a>
                                         </li>
 

@@ -10,6 +10,7 @@ use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\RouteMasterController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -29,6 +30,7 @@ Route::middleware(['auth', 'role:admin,super_admin'])->group(function () {
     Route::post('/upload-excel', [fileController::class, 'uploadExcel'])->name('upload.excel');
 
     Route::resource('beats', BeatController::class);
+    Route::resource('routes', RouteMasterController::class);
 
     Route::post('bulk-update', [PartySaleController::class, 'bulkUpdate'])->name('bulk-update');
     Route::post('bulk-sale-update', [SalesmanController::class, 'bulkSaleUpdate'])->name('bulk-sale-update');
