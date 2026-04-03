@@ -1,5 +1,6 @@
 @extends('layouts.master')
 @include('modals.credit_modal')
+@include('modals.trip_modal')
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/party_sales.css') }}">
 @endpush
@@ -211,7 +212,7 @@
                             $aging = $billDate->diffInDays(\Carbon\Carbon::today(), false);
                             $totalBalance += $sale->balance ?? 0;
                         @endphp
-                        <tr>
+                        <tr data-party-sale-id="{{ $sale->id }}">
                             <td class="hide-print">
                                 <button type="button" class="btn btn-sm btn-danger remove-row">
                                     ❌
@@ -283,46 +284,53 @@
                     </tfoot>
                 @endif
             </table>
-            <div id="vehicle-entry" class="card shadow-sm mt-4 mx-auto" style="max-width:380px;">
-                <div class="card-header fw-bold text-center">
-                    Vehicle Details
+            <div class="d-flex justify-content-between">
+                <div id="vehicle-entry" class="card shadow-sm mt-4" style="max-width:380px;">
+                    <div class="card-header fw-bold text-center">
+                        Vehicle Details
+                    </div>
+
+                    <div class="card-body p-2">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <tbody>
+
+                                <tr>
+                                    <td class="fw-semibold text-nowrap">Start KM</td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" min="0" class="form-control km-input" >
+                                            <span class="">KM</span>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td class="fw-semibold text-nowrap">End KM</td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" min="0" class="form-control km-input">
+                                            <span class="">KM</span>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td class="fw-semibold text-nowrap">Book No</td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm">
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+
                 </div>
-
-                <div class="card-body p-2">
-                    <table class="table table-sm table-bordered align-middle mb-0">
-                        <tbody>
-
-                            <tr>
-                                <td class="fw-semibold text-nowrap">Start KM</td>
-                                <td>
-                                    <div class="input-group input-group-sm">
-                                        <input type="number" min="0" class="form-control km-input" >
-                                        <span class="">KM</span>
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td class="fw-semibold text-nowrap">End KM</td>
-                                <td>
-                                    <div class="input-group input-group-sm">
-                                        <input type="number" min="0" class="form-control km-input">
-                                        <span class="">KM</span>
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td class="fw-semibold text-nowrap">Book No</td>
-                                <td>
-                                    <input type="text" class="form-control form-control-sm">
-                                </td>
-                            </tr>
-
-                        </tbody>
-                    </table>
+                <div class="mt-3 hide-print">
+                    <button type="button" class="btn btn-success" id="saveTripBtn">
+                        Save Trip
+                    </button>
                 </div>
-
             </div>
         </div>
     </div>
@@ -432,6 +440,8 @@
             document.querySelectorAll('.credit-checkbox:checked').forEach(cb => {
                 selected.push({
                     id: cb.value,
+                    partySaleId: cb.dataset.partySaleId,
+                    paymentEntryId: cb.dataset.paymentEntryId || null,
                     customer: cb.dataset.customer,
                     bill: cb.dataset.bill,
                     balance: cb.dataset.balance,
@@ -466,6 +476,10 @@
 
                 const tr = document.createElement('tr');
                 tr.setAttribute('data-credit-id', item.id);
+                tr.setAttribute('data-party-sale-id', item.partySaleId || item.id);
+                if (item.paymentEntryId) {
+                    tr.setAttribute('data-payment-entry-id', item.paymentEntryId);
+                }
                 const formattedDate = formatDate(item.date);
                 const agingDays = calculateAging(item.date);
                 tr.innerHTML = `
@@ -639,6 +653,97 @@
                 const row = e.target.closest('tr');
                 row.remove();
                 updateTotalBalance(); 
+            }
+        });
+
+        const saveTripBtn = document.getElementById('saveTripBtn');
+        const confirmSaveTripBtn = document.getElementById('confirmSaveTrip');
+        const saveTripModalEl = document.getElementById('saveTripModal');
+        const saveTripModal = saveTripModalEl ? new bootstrap.Modal(saveTripModalEl) : null;
+        const saveTripForm = document.getElementById('saveTripForm');
+
+        saveTripBtn?.addEventListener('click', function () {
+            saveTripModal?.show();
+        });
+
+        function collectTripItems() {
+            const rows = document.querySelectorAll('#tripSheetBody tr');
+            const items = [];
+
+            rows.forEach(row => {
+                if (row.classList.contains('salesman-row')) return;
+
+                const partySaleId = row.dataset.partySaleId || row.dataset.creditId || null;
+                const paymentEntryId = row.dataset.paymentEntryId || null;
+
+                if (!partySaleId) return;
+
+                items.push({
+                    party_sale_id: Number(partySaleId),
+                    payment_entry_id: paymentEntryId ? Number(paymentEntryId) : null
+                });
+            });
+
+            return items;
+        }
+
+        confirmSaveTripBtn?.addEventListener('click', async function () {
+            if (!saveTripForm) return;
+
+            const tripDateInput = saveTripForm.querySelector('input[name="trip_date"]');
+            const routeInput = saveTripForm.querySelector('select[name="route_id"]');
+
+            const tripDate = tripDateInput?.value;
+            const routeId = routeInput?.value;
+            const items = collectTripItems();
+
+            if (!tripDate) {
+                alert('Please select trip date');
+                return;
+            }
+
+            if (!routeId) {
+                alert('Please select route');
+                return;
+            }
+
+            if (!items.length) {
+                alert('No trip items found to save');
+                return;
+            }
+
+            confirmSaveTripBtn.disabled = true;
+            confirmSaveTripBtn.textContent = 'Saving...';
+
+            try {
+                const response = await fetch('{{ route('trip.save') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        trip_date: tripDate,
+                        route_id: Number(routeId),
+                        items
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to save trip');
+                }
+
+                alert(result.message || 'Trip saved successfully');
+                saveTripModal?.hide();
+                window.location.reload();
+            } catch (error) {
+                alert(error.message || 'Something went wrong while saving trip');
+            } finally {
+                confirmSaveTripBtn.disabled = false;
+                confirmSaveTripBtn.textContent = 'Save';
             }
         });
     </script>

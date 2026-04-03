@@ -53,6 +53,9 @@ Route::middleware(['auth', 'role:admin,super_admin'])->group(function () {
 
     Route::get('/trip-sheet', [fileController::CLASS, 'trip_sheet_report'])->name('trip.report');
     Route::get('/credit-details-popup', [fileController::class, 'credit_popup']);
+    Route::post('/trip-sheet/save', [fileController::class, 'save_trip'])->name('trip.save');
+    Route::get('/trip-details', [fileController::class, 'trip_details'])->name('trip.details');
+    Route::get('/trip-details-routes', [fileController::class, 'trip_details_routes'])->name('trip.details.routes');
 
     Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
     Route::get('/collections/download', [CollectionController::class, 'download'])->name('collections.download');

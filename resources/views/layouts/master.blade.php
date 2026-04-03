@@ -130,6 +130,13 @@
                                                 <i class="bi bi-list-check"></i> Trip Sheet
                                             </a>
                                         </li>
+
+                                        <li>
+                                            <a class="dropdown-item {{ request()->routeIs('trip.details*') ? 'active' : '' }}"
+                                            href="{{ route('trip.details') }}">
+                                                <i class="bi bi-card-list"></i> Trip Details
+                                            </a>
+                                        </li>
                                     </ul>
                                 </div>
                             @endif

@@ -12,7 +12,11 @@ use Illuminate\Database\QueryException;
 use App\Models\Beat;
 use App\Models\PartySale;
 use App\Models\Customer;
+use App\Models\RouteMaster;
+use App\Models\Trip;
+use App\Models\TripItem;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 
 
@@ -216,6 +220,7 @@ class fileController extends Controller
     public function trip_sheet_report(Request $request){
         $salesmen = Beat::select('salesman')->distinct()->pluck('salesman');
         $beats = Beat::orderBy('name')->get();
+        $routes = RouteMaster::orderBy('name')->get();
         $is_today_report = false;
         $date = $request->filled('bill_date')
             ? Carbon::parse($request->bill_date)->format('Y-m-d')
@@ -251,7 +256,7 @@ class fileController extends Controller
         if ($request->filled('beat_ids')) {
             $selectedBeats = Beat::whereIn('id', (array) $request->beat_ids)->get();
         }
-        return view('pages.trip_report', compact('sales', 'salesmen', 'customers','beats','selectedBeats','is_today_report'));
+        return view('pages.trip_report', compact('sales', 'salesmen', 'customers','beats','selectedBeats','is_today_report','routes'));
     }
 
     public function credit_popup(Request $request)
@@ -293,7 +298,8 @@ class fileController extends Controller
                 'latest_payment.amount_received as latest_amount_received',
                 'latest_payment.balance as latest_balance',
                 'latest_payment.payment_date as latest_payment_date',
-                'latest_payment.status as latest_status'
+                'latest_payment.status as latest_status',
+                'latest_payment.id as payment_entry_id'
             );
 
         if ($request->filled('salesmen')) {
@@ -314,6 +320,151 @@ class fileController extends Controller
         $selectedBeat = $request->filled('beat_id') ? Beat::find($request->beat_id) : null;
 
         return view('modals.credit_details', compact('sales', 'salesmen', 'customers','beats','selectedBeat'));
+    }
+
+    public function save_trip(Request $request)
+    {
+        $validated = $request->validate([
+            'trip_date' => ['required', 'date'],
+            'route_id' => ['required', 'exists:routes,id'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.party_sale_id' => ['nullable', 'integer', 'exists:party_sales,id'],
+            'items.*.payment_entry_id' => ['nullable', 'integer', 'exists:payment_entries,id'],
+        ]);
+// dd($validated);
+        DB::beginTransaction();
+        try {
+            $tripNumber = 'TRIP-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(4));
+
+            $trip = Trip::create([
+                'trip_number' => $tripNumber,
+                'trip_date' => $validated['trip_date'],
+                'route_id' => $validated['route_id'],
+            ]);
+
+            $tripItems = [];
+            foreach ($validated['items'] as $item) {
+                if (empty($item['party_sale_id']) && empty($item['payment_entry_id'])) {
+                    continue;
+                }
+
+                $tripItems[] = [
+                    'trip_id' => $trip->id,
+                    'party_sale_id' => $item['party_sale_id'] ?? null,
+                    'payment_entry_id' => $item['payment_entry_id'] ?? null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            if (empty($tripItems)) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'No valid trip items found to save.'
+                ], 422);
+            }
+
+            TripItem::insert($tripItems);
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Trip sheet saved successfully.',
+                'trip_id' => $trip->id
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to save trip sheet.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function trip_details(Request $request)
+    {
+        $selectedDate = $request->filled('trip_date')
+            ? Carbon::parse($request->trip_date)->format('Y-m-d')
+            : Carbon::today()->format('Y-m-d');
+
+        $routes = RouteMaster::orderBy('name')->get();
+        $selectedRouteId = $request->filled('route_id') ? (int) $request->route_id : null;
+
+        $tripCount = 0;
+        $tripItems = collect();
+
+        if ($selectedRouteId) {
+            $tripIds = Trip::query()
+                ->whereDate('trip_date', $selectedDate)
+                ->where('route_id', $selectedRouteId)
+                ->pluck('id');
+
+            $tripCount = $tripIds->count();
+
+            if ($tripCount > 0) {
+                $tripItems = DB::table('trip_items as ti')
+                    ->join('trips as t', 't.id', '=', 'ti.trip_id')
+                    ->leftJoin('party_sales as ps', 'ps.id', '=', 'ti.party_sale_id')
+                    ->leftJoin('customers as c', 'c.id', '=', 'ps.customer_id')
+                    ->leftJoin('beats as b', 'b.id', '=', 'ps.beat_id')
+                    ->leftJoin('payment_entries as pe', 'pe.id', '=', 'ti.payment_entry_id')
+                    ->whereIn('ti.trip_id', $tripIds)
+                    ->orderByDesc('ti.trip_id')
+                    ->orderBy('ti.id')
+                    ->select(
+                        'ti.id',
+                        'ti.trip_id',
+                        'ti.party_sale_id',
+                        'ti.payment_entry_id',
+                        't.trip_number',
+                        'ps.bill_no',
+                        'ps.bill_date',
+                        'ps.amount as sale_amount',
+                        'ps.balance as sale_balance',
+                        'c.name as customer_name',
+                        'b.name as beat_name',
+                        'pe.payment_date',
+                        'pe.amount_received',
+                        'pe.balance as payment_balance',
+                        'pe.status as payment_status'
+                    )
+                    ->get()
+                    ->map(function ($item) {
+                        $itemType = $item->payment_entry_id ? 'Credit' : 'Sale';
+                        $item->item_type = $itemType;
+                        $item->display_balance = $item->payment_entry_id
+                            ? $item->payment_balance
+                            : $item->sale_balance;
+                        return $item;
+                    });
+            }
+        }
+
+        return view('pages.trip_details', compact(
+            'routes',
+            'selectedDate',
+            'selectedRouteId',
+            'tripCount',
+            'tripItems'
+        ));
+    }
+
+    public function trip_details_routes(Request $request)
+    {
+        $validated = $request->validate([
+            'trip_date' => ['required', 'date'],
+        ]);
+
+        $routes = RouteMaster::query()
+            ->join('trips', 'trips.route_id', '=', 'routes.id')
+            ->whereDate('trips.trip_date', $validated['trip_date'])
+            ->select('routes.id', 'routes.name')
+            ->distinct()
+            ->orderBy('routes.name')
+            ->get();
+
+        return response()->json([
+            'routes' => $routes,
+        ]);
     }
 
 }

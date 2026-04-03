@@ -21,6 +21,8 @@
                 <input type="checkbox"
                        class="credit-checkbox"
                        value="{{ $sale->id }}"
+                       data-party-sale-id="{{ $sale->id }}"
+                       data-payment-entry-id="{{ $sale->payment_entry_id }}"
                        data-customer="{{ $sale->customer->name }}"
                        data-bill="{{ $sale->bill_no }}"
                        data-balance="{{ $sale->latest_balance }}"
