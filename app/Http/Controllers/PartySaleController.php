@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\PartySale;
 use App\Models\Beat;
 use App\Models\Customer;
-use App\Models\PaymentEntry;
 use App\Models\Product;
 use App\Models\ManualBillItem;
 use Illuminate\Http\Request;
@@ -17,6 +16,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Services\PaymentEntryService;
+use App\Services\PartySaleBulkUpdateService;
 
 class PartySaleController extends Controller
 {
@@ -324,66 +324,12 @@ class PartySaleController extends Controller
         }, 'Party_Sales.xlsx');
     }
 
-    public function bulkUpdate(Request $request)
+    public function bulkUpdate(Request $request, PartySaleBulkUpdateService $partySaleBulkUpdate)
     {
-        foreach ($request->sales as $id => $data) {
-
-            $sale = PartySale::find($id);
-            if (!$sale) continue;
-
-            $sale->fill([
-                'customer_id'     => $data['customer_id'] ?? $sale->customer_id,
-                'aging'           => $data['aging'] ?? $sale->aging,
-                'cd'              => $data['cd'] ?? $sale->cd,
-                'product_return'  => $data['product_return'] ?? $sale->product_return,
-                'online_payment'  => $data['online_payment'] ?? $sale->online_payment,
-                'amount_received' => $data['amount_received'] ?? $sale->amount_received,
-                'balance'         => $data['balance'] ?? $sale->balance,
-            ]);
-
-            $customerChanged = $sale->isDirty('customer_id');
-            $paymentChanged = $sale->isDirty([
-                'amount_received',
-                'cd',
-                'product_return',
-                'online_payment',
-                'balance'
-            ]);
-
-            if ($sale->isDirty()) {
-                $sale->modified = $customerChanged;
-                $sale->save();
-            }
-
-            if ($customerChanged && !$paymentChanged) {
-                PaymentEntry::where('bill_no', $sale->bill_no)
-                    ->update(['customer_id' => $sale->customer_id]);
-
-                continue;
-            }
-
-            if ($paymentChanged) {
-
-                $sale->first_entry = true;
-                $sale->save();
-
-                PaymentEntry::create([
-                    'part_sale_id'     => $sale->id,
-                    'customer_id'      => $sale->customer_id,
-                    'bill_no'          => $sale->bill_no,
-                    'payment_date'     => now(),
-                    'amount'           => $sale->amount,
-                    'cd'               => $sale->cd,
-                    'product_return'   => $sale->product_return,
-                    'online_payment'   => $sale->online_payment,
-                    'amount_received'  => $sale->amount_received,
-                    'balance'          => $sale->balance,
-                    'remarks'          => $sale->remarks,
-                    'status'           => $sale->balance == 0 ? 'complete' : 'pending',
-                    'party_sale_payment' => true,
-                ]);
-            }
+        foreach ($request->sales ?? [] as $id => $data) {
+            $partySaleBulkUpdate->applyRow((int) $id, $data);
         }
+
         return redirect()->back()->with('success', 'Sales updated successfully');
     }
 }

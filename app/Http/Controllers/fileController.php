@@ -15,6 +15,9 @@ use App\Models\Customer;
 use App\Models\RouteMaster;
 use App\Models\Trip;
 use App\Models\TripItem;
+use App\Models\PaymentEntry;
+use App\Services\PartySaleBulkUpdateService;
+use App\Services\PaymentEntryService;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 
@@ -331,7 +334,6 @@ class fileController extends Controller
             'items.*.party_sale_id' => ['nullable', 'integer', 'exists:party_sales,id'],
             'items.*.payment_entry_id' => ['nullable', 'integer', 'exists:payment_entries,id'],
         ]);
-// dd($validated);
         DB::beginTransaction();
         try {
             $tripNumber = 'TRIP-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(4));
@@ -391,6 +393,11 @@ class fileController extends Controller
 
         $tripCount = 0;
         $tripItems = collect();
+        $customers = collect();
+        $prevTotalAmountReceived = 0;
+        $totalProductReturn = 0;
+        $totalOnlinePayment = 0;
+        $totalBalance = 0;
 
         if ($selectedRouteId) {
             $tripIds = Trip::query()
@@ -420,12 +427,23 @@ class fileController extends Controller
                         'ps.bill_date',
                         'ps.amount as sale_amount',
                         'ps.balance as sale_balance',
+                        'ps.first_entry',
+                        'ps.customer_id',
+                        'ps.cd as party_cd',
+                        'ps.product_return as party_product_return',
+                        'ps.online_payment as party_online_payment',
+                        'ps.amount_received as party_amount_received',
+                        'ps.remarks as party_remarks',
                         'c.name as customer_name',
                         'b.name as beat_name',
                         'pe.payment_date',
                         'pe.amount_received',
                         'pe.balance as payment_balance',
-                        'pe.status as payment_status'
+                        'pe.status as payment_status',
+                        'pe.cd as credit_cd',
+                        'pe.product_return as credit_product_return',
+                        'pe.online_payment as credit_online_payment',
+                        'pe.amount_received as credit_amount_received'
                     )
                     ->get()
                     ->map(function ($item) {
@@ -436,6 +454,22 @@ class fileController extends Controller
                             : $item->sale_balance;
                         return $item;
                     });
+
+                $customers = Customer::with('beat')->orderBy('name')->get();
+
+                foreach ($tripItems as $item) {
+                    if ($item->payment_entry_id) {
+                        $prevTotalAmountReceived += (float) ($item->credit_amount_received ?? 0);
+                        $totalProductReturn += (float) ($item->credit_product_return ?? 0);
+                        $totalOnlinePayment += (float) ($item->credit_online_payment ?? 0);
+                        $totalBalance += (float) ($item->payment_balance ?? 0);
+                    } else {
+                        $prevTotalAmountReceived += (float) ($item->party_amount_received ?? 0);
+                        $totalProductReturn += (float) ($item->party_product_return ?? 0);
+                        $totalOnlinePayment += (float) ($item->party_online_payment ?? 0);
+                        $totalBalance += (float) ($item->sale_balance ?? 0);
+                    }
+                }
             }
         }
 
@@ -444,8 +478,109 @@ class fileController extends Controller
             'selectedDate',
             'selectedRouteId',
             'tripCount',
-            'tripItems'
+            'tripItems',
+            'customers',
+            'prevTotalAmountReceived',
+            'totalProductReturn',
+            'totalOnlinePayment',
+            'totalBalance'
         ));
+    }
+
+    public function trip_details_update(Request $request, PartySaleBulkUpdateService $partySaleBulkUpdate, PaymentEntryService $paymentEntryService)
+    {
+        $validated = $request->validate([
+            'trip_date' => ['required', 'date'],
+            'route_id' => ['required', 'exists:routes,id'],
+            'items' => ['nullable', 'array'],
+            'items.*.party_sale_id' => ['required', 'integer', 'exists:party_sales,id'],
+            'items.*.payment_entry_id' => ['nullable', 'integer', 'exists:payment_entries,id'],
+            'items.*.customer_id' => ['nullable', 'integer', 'exists:customers,id'],
+            'items.*.bill_date' => ['nullable', 'date'],
+            'items.*.cd' => ['nullable', 'numeric'],
+            'items.*.product_return' => ['nullable', 'numeric'],
+            'items.*.online_payment' => ['nullable', 'numeric'],
+            'items.*.amount_received' => ['nullable', 'numeric'],
+            'items.*.balance' => ['nullable', 'numeric'],
+        ]);
+
+        $items = $validated['items'] ?? [];
+        if ($items === []) {
+            return redirect()
+                ->route('trip.details', [
+                    'trip_date' => $validated['trip_date'],
+                    'route_id' => $validated['route_id'],
+                ])
+                ->with('error', 'No rows to update.');
+        }
+
+        $saleRowsByPartyId = [];
+        $creditRows = [];
+
+        foreach ($items as $row) {
+            if (! empty($row['payment_entry_id'])) {
+                $creditRows[] = $row;
+            } else {
+                $saleRowsByPartyId[(int) $row['party_sale_id']] = $row;
+            }
+        }
+
+        DB::transaction(function () use ($saleRowsByPartyId, $creditRows, $partySaleBulkUpdate, $paymentEntryService) {
+            foreach ($saleRowsByPartyId as $partySaleId => $data) {
+                $partySaleBulkUpdate->applyRow($partySaleId, $data);
+            }
+            foreach ($creditRows as $data) {
+                $this->applyTripDetailsCreditRow($data, $paymentEntryService);
+            }
+        });
+
+        return redirect()
+            ->route('trip.details', [
+                'trip_date' => $validated['trip_date'],
+                'route_id' => $validated['route_id'],
+            ])
+            ->with('success', 'Trip details saved successfully.');
+    }
+
+    private function applyTripDetailsCreditRow(array $data, PaymentEntryService $paymentEntryService): void
+    {
+        $partySaleId = (int) $data['party_sale_id'];
+        $entryId = (int) $data['payment_entry_id'];
+
+        $entry = PaymentEntry::query()->find($entryId);
+        if (! $entry || (int) $entry->part_sale_id !== $partySaleId) {
+            return;
+        }
+
+        $entry->update([
+            'cd' => $data['cd'] ?? $entry->cd,
+            'product_return' => $data['product_return'] ?? $entry->product_return,
+            'online_payment' => $data['online_payment'] ?? $entry->online_payment,
+            'amount_received' => $data['amount_received'] ?? $entry->amount_received,
+        ]);
+
+        $paymentEntryService->syncBalancesForPartySale($partySaleId);
+
+        $entry->refresh();
+        $entry->update([
+            'status' => (float) $entry->balance == 0 ? 'complete' : 'pending',
+        ]);
+
+        $latest = PaymentEntry::query()
+            ->where('part_sale_id', $partySaleId)
+            ->orderByDesc('id')
+            ->first();
+
+        $sale = PartySale::query()->find($partySaleId);
+        if ($sale && $latest) {
+            $sale->cd = $latest->cd;
+            $sale->product_return = $latest->product_return;
+            $sale->online_payment = $latest->online_payment;
+            $sale->amount_received = $latest->amount_received;
+            $sale->balance = $latest->balance;
+            $sale->first_entry = true;
+            $sale->save();
+        }
     }
 
     public function trip_details_routes(Request $request)
