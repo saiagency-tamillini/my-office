@@ -1,4 +1,4 @@
-@extends('layouts.master')
+{{-- @extends('layouts.master')
 @include('modals.denomination_modal')
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/party_sales.css') }}">
@@ -222,8 +222,306 @@
         </div>
 
     </div>
-@endsection
+@endsection --}}
+@extends('layouts.master')
+@include('modals.denomination_modal')
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/party_sales.css') }}">
+@endpush
 
+@section('content')
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="mb-0">Trip Details</h2>
+        </div>
+
+        <div class="mb-3">
+            <button class="btn btn-outline-primary w-100 text-start d-flex justify-content-between align-items-center"
+                    type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel"
+                    aria-expanded="false" aria-controls="filterPanel">
+                Filters
+                <i class="bi bi-chevron-down" id="filterIcon"></i>
+            </button>
+
+            <div class="collapse mt-2" id="filterPanel">
+                <form method="GET" action="{{ route('trip.details') }}" class="mb-3">
+                    <div class="d-flex flex-column p-3 border rounded bg-light">
+                        <div class="d-flex gap-5 flex-wrap">
+
+                            <!-- Trip Date -->
+                            <div class="mb-2 d-flex h-fit gap-2 align-items-center flex-wrap">
+                                <label class="form-label fw-bold mb-0">Trip Date:</label>
+                                <input type="date"
+                                       id="tripDateInput"
+                                       name="trip_date"
+                                       class="form-control"
+                                       value="{{ $selectedDate }}"
+                                       required>
+                            </div>
+
+                            <!-- Route -->
+                            <div>
+                                <label class="form-label fw-bold">Route:</label>
+                                <select id="routeSelect" name="route_id" class="form-select" required>
+                                    <option value="">-- Select Route --</option>
+                                    @foreach($routes as $route)
+                                        <option value="{{ $route->id }}"
+                                            {{ (int) $selectedRouteId === (int) $route->id ? 'selected' : '' }}>
+                                            {{ $route->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Salesman -->
+                            <div class="d-flex flex-wrap h-fit flex-column mb-2">
+                                <div class="fw-bold">Filter by Salesman:</div>
+                                @foreach($salesmen as $salesman)
+                                    <div class="form-check me-3 cursor-pointer">
+                                        <input class="form-check-input border border-dark"
+                                               type="checkbox"
+                                               name="salesmen[]"
+                                               value="{{ $salesman }}"
+                                               id="salesman_{{ $loop->index }}"
+                                               {{ is_array(request('salesmen')) && in_array($salesman, request('salesmen')) ? 'checked' : '' }}>
+                                        <label class="form-check-label cursor-pointer" for="salesman_{{ $loop->index }}">
+                                            {{ $salesman }}
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                        </div>
+
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary me-2">Filter</button>
+                            <a href="{{ route('trip.details') }}" class="btn btn-secondary">Reset</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @if(session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+        @if(session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
+
+        <div class="card">
+            <div class="card-header fw-semibold">
+                Trip Items
+                @if($selectedRouteId)
+                    <span class="ms-2 text-muted small">
+                        Trips: {{ $tripCount }} | Items: {{ $tripItems->count() }}
+                    </span>
+                @endif
+            </div>
+
+            <div class="card-body p-0">
+                @if(!$selectedRouteId)
+                    <div class="text-center text-muted py-3">
+                        Select date and route to view trip items.
+                    </div>
+                @elseif($tripCount === 0)
+                    <div class="text-center text-muted py-3">
+                        No trips found for selected date and route.
+                    </div>
+                @elseif($tripItems->isEmpty())
+                    <div class="text-center text-muted py-3">
+                        Trips found, but no trip items available.
+                    </div>
+                @else
+                    <form id="tripDetailsForm" method="POST" action="{{ route('trip.details.update') }}">
+                        @csrf
+                        <input type="hidden" name="trip_date" value="{{ $selectedDate }}">
+                        <input type="hidden" name="route_id" value="{{ $selectedRouteId }}">
+
+                        @php
+                            $serial = 1;
+                            $currentSalesman = null;
+                        @endphp
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        {{-- <th>Trip No</th> --}}
+                                        <th>Type</th>
+                                        <th style="min-width: 220px;">Customer</th>
+                                        <th>Bill No</th>
+                                        <th>Bill Date</th>
+                                        <th>Aging<br>(days)</th>
+                                        <th>Amount</th>
+                                        <th>CD</th>
+                                        <th>Product Return</th>
+                                        <th>Online Payment</th>
+                                        <th>Amount Received</th>
+                                        <th class="hide-print">Balance</th>
+                                        {{-- <th class="hide-print">Beat</th> --}}
+                                        {{-- <th class="hide-print">Status</th> --}}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($tripItems as $item)
+                                        @php
+                                            $locked = !empty($item->first_entry);
+                                            $isCredit = $item->item_type === 'Credit';
+                                            $billDate = $item->bill_date ? \Carbon\Carbon::parse($item->bill_date) : null;
+                                            $aging = $billDate ? $billDate->diffInDays(\Carbon\Carbon::today(), false) : '';
+                                            $cdVal = $isCredit ? ($item->credit_cd ?? 0) : ($item->party_cd ?? '');
+                                            $prVal = $isCredit ? ($item->credit_product_return ?? '') : ($item->party_product_return ?? '');
+                                            $opVal = $isCredit ? ($item->credit_online_payment ?? '') : ($item->party_online_payment ?? '');
+                                            $arVal = $isCredit ? ($item->credit_amount_received ?? '') : ($item->party_amount_received ?? '');
+                                            $balRef = $isCredit ? ($item->payment_balance ?? '') : ($item->sale_balance ?? '');
+                                            $salesmanName = $item->salesman_name ?? 'No Salesman';
+                                        @endphp
+
+                                        @if($currentSalesman !== $salesmanName)
+                                            <tr class="salesman-row">
+                                                <td colspan="15" class="salesman-cell">{{ $salesmanName }}</td>
+                                            </tr>
+                                            @php
+                                                $currentSalesman = $salesmanName;
+                                                $serial = 1;
+                                            @endphp
+                                        @endif
+
+                                        <tr class="{{ $locked ? 'bg-lite' : '' }}">
+                                            <td>
+                                                {{ $serial++ }}
+                                                @if(!$locked)
+                                                    <input type="hidden" name="items[{{ $item->id }}][party_sale_id]" value="{{ $item->party_sale_id }}">
+                                                    @if($isCredit && $item->payment_entry_id)
+                                                        <input type="hidden" name="items[{{ $item->id }}][payment_entry_id]" value="{{ $item->payment_entry_id }}">
+                                                    @endif
+                                                @endif
+                                            </td>
+
+                                            {{-- <td>{{ $item->trip_number ?? '-' }}</td> --}}
+                                            <td>{{ $item->item_type }}</td>
+
+                                            <td class="customer-name">
+                                                @if($isCredit)
+                                                    {{ $item->customer_name ?? '-' }}
+                                                @else
+                                                    @if($locked)
+                                                        {{ $item->customer_name ?? '-' }}
+                                                    @else
+                                                        <select name="items[{{ $item->id }}][customer_id]" class="form-control w-100 customer-select">
+                                                            @foreach($customers as $customer)
+                                                                <option value="{{ $customer->id }}"
+                                                                    {{ (int) $item->customer_id === (int) $customer->id ? 'selected' : '' }}>
+                                                                    {{ $customer->name }} ({{ $customer->beat->name ?? 'No Beat' }})
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    @endif
+                                                @endif
+                                            </td>
+
+                                            <td class="bill-no">{{ $item->bill_no ?? '-' }}</td>
+
+                                            <td class="date-col">
+                                                {{ $item->bill_date ? \Carbon\Carbon::parse($item->bill_date)->format('d-m-Y') : '' }}
+                                                @if(!$isCredit && !$locked)
+                                                    <input type="hidden" name="items[{{ $item->id }}][bill_date]" value="{{ $item->bill_date }}">
+                                                @endif
+                                            </td>
+
+                                            <td class="aging-col">{{ $aging }}</td>
+                                            <td>{{ $item->sale_amount ?? '-' }}</td>
+
+                                            <td>
+                                                @if($locked)
+                                                    {{ $cdVal }}
+                                                @else
+                                                    <input type="number" class="form-control"
+                                                           name="items[{{ $item->id }}][cd]"
+                                                           value="{{ $cdVal }}"
+                                                           max="{{ $item->sale_amount ?? 0 }}"
+                                                           oninput="validateMax(this, {{ $balRef }}); updateBalanceTripItem({{ $item->id }}, {{ $balRef }})">
+                                                @endif
+                                            </td>
+
+                                            <td>
+                                                @if($locked)
+                                                    {{ $prVal }}
+                                                @else
+                                                    <input type="number" class="form-control"
+                                                           name="items[{{ $item->id }}][product_return]"
+                                                           value="{{ $prVal }}"
+                                                           max="{{ $item->sale_amount ?? 0 }}"
+                                                           oninput="validateMax(this, {{ $balRef }}); updateBalanceTripItem({{ $item->id }}, {{ $balRef }})">
+                                                @endif
+                                            </td>
+
+                                            <td class="amount-col">
+                                                @if($locked)
+                                                    {{ $opVal }}
+                                                @else
+                                                    <input type="number" class="form-control"
+                                                           name="items[{{ $item->id }}][online_payment]"
+                                                           value="{{ $opVal }}"
+                                                           oninput="updateBalanceTripItem({{ $item->id }}, {{ $balRef }})">
+                                                @endif
+                                            </td>
+
+                                            <td class="amount-col">
+                                                @if($locked)
+                                                    {{ $arVal }}
+                                                @else
+                                                    <input type="number" class="form-control"
+                                                           name="items[{{ $item->id }}][amount_received]"
+                                                           value="{{ $arVal }}"
+                                                           oninput="updateBalanceTripItem({{ $item->id }}, {{ $balRef }})">
+                                                @endif
+                                            </td>
+
+                                            <td class="hide-print balance-col">
+                                                @if($locked)
+                                                    {{ $item->display_balance ?? '-' }}
+                                                @else
+                                                    <input type="number" class="form-control balance"
+                                                           style="width: 100px;"
+                                                           id="balance-ti-{{ $item->id }}"
+                                                           name="items[{{ $item->id }}][balance]"
+                                                           data-amount="{{ $balRef }}"
+                                                           value="{{ $item->display_balance }}"
+                                                           readonly>
+                                                @endif
+                                            </td>
+
+                                            {{-- <td class="hide-print">{{ $item->beat_name ?? '-' }}</td> --}}
+                                            {{-- <td class="hide-print">{{ $item->payment_status ?? '-' }}</td> --}}
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+
+                                <tfoot class="hide-print">
+                                    <tr style="font-weight:bold; background-color:#f0f0f0;">
+                                        <td colspan="8" class="text-end">Total:</td>
+                                        <td id="totalProductReturn">{{ $totalProductReturn }}</td>
+                                        <td id="totalOnlinePayment">{{ $totalOnlinePayment }}</td>
+                                        <td id="totalAmountReceived">{{ $prevTotalAmountReceived }}</td>
+                                        <td id="totalBalance">{{ $totalBalance }}</td>
+                                        <td colspan="1"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div class="text-end mt-3 mb-3 me-3">
+                            <button type="submit" class="btn btn-success">Save Changes</button>
+                        </div>
+                    </form>
+                @endif
+            </div>
+        </div>
+    </div>
+@endsection
 @push('scripts')
     <script>
         const tripDateInput = document.getElementById('tripDateInput');

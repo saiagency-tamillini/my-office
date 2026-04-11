@@ -382,6 +382,110 @@ class fileController extends Controller
         }
     }
 
+    // public function trip_details(Request $request)
+    // {
+    //     $selectedDate = $request->filled('trip_date')
+    //         ? Carbon::parse($request->trip_date)->format('Y-m-d')
+    //         : Carbon::today()->format('Y-m-d');
+
+    //     $routes = RouteMaster::orderBy('name')->get();
+    //     $selectedRouteId = $request->filled('route_id') ? (int) $request->route_id : null;
+
+    //     $tripCount = 0;
+    //     $tripItems = collect();
+    //     $customers = collect();
+    //     $prevTotalAmountReceived = 0;
+    //     $totalProductReturn = 0;
+    //     $totalOnlinePayment = 0;
+    //     $totalBalance = 0;
+
+    //     if ($selectedRouteId) {
+    //         $tripIds = Trip::query()
+    //             ->whereDate('trip_date', $selectedDate)
+    //             ->where('route_id', $selectedRouteId)
+    //             ->pluck('id');
+
+    //         $tripCount = $tripIds->count();
+
+    //         if ($tripCount > 0) {
+    //             $tripItems = DB::table('trip_items as ti')
+    //                 ->join('trips as t', 't.id', '=', 'ti.trip_id')
+    //                 ->leftJoin('party_sales as ps', 'ps.id', '=', 'ti.party_sale_id')
+    //                 ->leftJoin('customers as c', 'c.id', '=', 'ps.customer_id')
+    //                 ->leftJoin('beats as b', 'b.id', '=', 'ps.beat_id')
+    //                 ->leftJoin('payment_entries as pe', 'pe.id', '=', 'ti.payment_entry_id')
+    //                 ->whereIn('ti.trip_id', $tripIds)
+    //                 ->orderByDesc('ti.trip_id')
+    //                 ->orderBy('ti.id')
+    //                 ->select(
+    //                     'ti.id',
+    //                     'ti.trip_id',
+    //                     'ti.party_sale_id',
+    //                     'ti.payment_entry_id',
+    //                     't.trip_number',
+    //                     'ps.bill_no',
+    //                     'ps.bill_date',
+    //                     'ps.amount as sale_amount',
+    //                     'ps.balance as sale_balance',
+    //                     'ps.first_entry',
+    //                     'ps.customer_id',
+    //                     'ps.cd as party_cd',
+    //                     'ps.product_return as party_product_return',
+    //                     'ps.online_payment as party_online_payment',
+    //                     'ps.amount_received as party_amount_received',
+    //                     'ps.remarks as party_remarks',
+    //                     'c.name as customer_name',
+    //                     'b.name as beat_name',
+    //                     'pe.payment_date',
+    //                     'pe.amount_received',
+    //                     'pe.balance as payment_balance',
+    //                     'pe.status as payment_status',
+    //                     'pe.cd as credit_cd',
+    //                     'pe.product_return as credit_product_return',
+    //                     'pe.online_payment as credit_online_payment',
+    //                     'pe.amount_received as credit_amount_received'
+    //                 )
+    //                 ->get()
+    //                 ->map(function ($item) {
+    //                     $itemType = $item->payment_entry_id ? 'Credit' : 'Sale';
+    //                     $item->item_type = $itemType;
+    //                     $item->display_balance = $item->payment_entry_id
+    //                         ? $item->payment_balance
+    //                         : $item->sale_balance;
+    //                     return $item;
+    //                 });
+
+    //             $customers = Customer::with('beat')->orderBy('name')->get();
+
+    //             foreach ($tripItems as $item) {
+    //                 if ($item->payment_entry_id) {
+    //                     $prevTotalAmountReceived += (float) ($item->credit_amount_received ?? 0);
+    //                     $totalProductReturn += (float) ($item->credit_product_return ?? 0);
+    //                     $totalOnlinePayment += (float) ($item->credit_online_payment ?? 0);
+    //                     $totalBalance += (float) ($item->payment_balance ?? 0);
+    //                 } else {
+    //                     $prevTotalAmountReceived += (float) ($item->party_amount_received ?? 0);
+    //                     $totalProductReturn += (float) ($item->party_product_return ?? 0);
+    //                     $totalOnlinePayment += (float) ($item->party_online_payment ?? 0);
+    //                     $totalBalance += (float) ($item->sale_balance ?? 0);
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     return view('pages.trip_details', compact(
+    //         'routes',
+    //         'selectedDate',
+    //         'selectedRouteId',
+    //         'tripCount',
+    //         'tripItems',
+    //         'customers',
+    //         'prevTotalAmountReceived',
+    //         'totalProductReturn',
+    //         'totalOnlinePayment',
+    //         'totalBalance'
+    //     ));
+    // }
     public function trip_details(Request $request)
     {
         $selectedDate = $request->filled('trip_date')
@@ -390,6 +494,14 @@ class fileController extends Controller
 
         $routes = RouteMaster::orderBy('name')->get();
         $selectedRouteId = $request->filled('route_id') ? (int) $request->route_id : null;
+
+        // Get all salesmen for filter checkboxes
+        $salesmen = Beat::whereNotNull('salesman')
+            ->where('salesman', '!=', '')
+            ->select('salesman')
+            ->distinct()
+            ->orderBy('salesman')
+            ->pluck('salesman');
 
         $tripCount = 0;
         $tripItems = collect();
@@ -408,13 +520,21 @@ class fileController extends Controller
             $tripCount = $tripIds->count();
 
             if ($tripCount > 0) {
-                $tripItems = DB::table('trip_items as ti')
+                $query = DB::table('trip_items as ti')
                     ->join('trips as t', 't.id', '=', 'ti.trip_id')
                     ->leftJoin('party_sales as ps', 'ps.id', '=', 'ti.party_sale_id')
                     ->leftJoin('customers as c', 'c.id', '=', 'ps.customer_id')
                     ->leftJoin('beats as b', 'b.id', '=', 'ps.beat_id')
                     ->leftJoin('payment_entries as pe', 'pe.id', '=', 'ti.payment_entry_id')
-                    ->whereIn('ti.trip_id', $tripIds)
+                    ->whereIn('ti.trip_id', $tripIds);
+
+                // Filter by selected salesmen
+                if ($request->filled('salesmen')) {
+                    $query->whereIn('b.salesman', $request->salesmen);
+                }
+
+                $tripItems = $query
+                    ->orderBy('b.salesman')
                     ->orderByDesc('ti.trip_id')
                     ->orderBy('ti.id')
                     ->select(
@@ -436,6 +556,7 @@ class fileController extends Controller
                         'ps.remarks as party_remarks',
                         'c.name as customer_name',
                         'b.name as beat_name',
+                        'b.salesman as salesman_name',
                         'pe.payment_date',
                         'pe.amount_received',
                         'pe.balance as payment_balance',
@@ -452,6 +573,9 @@ class fileController extends Controller
                         $item->display_balance = $item->payment_entry_id
                             ? $item->payment_balance
                             : $item->sale_balance;
+
+                        $item->salesman_name = $item->salesman_name ?: 'No Salesman';
+
                         return $item;
                     });
 
@@ -477,6 +601,7 @@ class fileController extends Controller
             'routes',
             'selectedDate',
             'selectedRouteId',
+            'salesmen',
             'tripCount',
             'tripItems',
             'customers',
