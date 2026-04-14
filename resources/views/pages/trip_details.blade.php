@@ -367,14 +367,14 @@
                                 <tbody>
                                     @foreach($tripItems as $item)
                                         @php
-                                            $locked = !empty($item->first_entry);
+                                            $locked = !empty($item->first_entry) || $sheetLocked;
                                             $isCredit = $item->item_type === 'Credit';
                                             $billDate = $item->bill_date ? \Carbon\Carbon::parse($item->bill_date) : null;
                                             $aging = $billDate ? $billDate->diffInDays(\Carbon\Carbon::today(), false) : '';
-                                            $cdVal = $isCredit ? ($item->credit_cd ?? 0) : ($item->party_cd ?? '');
-                                            $prVal = $isCredit ? ($item->credit_product_return ?? '') : ($item->party_product_return ?? '');
-                                            $opVal = $isCredit ? ($item->credit_online_payment ?? '') : ($item->party_online_payment ?? '');
-                                            $arVal = $isCredit ? ($item->credit_amount_received ?? '') : ($item->party_amount_received ?? '');
+                                            $cdVal = $isCredit ? ($sheetLocked ? ($item->credit_cd ?? 0) : '') : ($item->party_cd ?? '');
+                                            $prVal = $isCredit ? ($sheetLocked ? ($item->credit_product_return ?? '') : '') : ($item->party_product_return ?? '');
+                                            $opVal = $isCredit ? ($sheetLocked ? ($item->credit_online_payment ?? '') : '') : ($item->party_online_payment ?? '');
+                                            $arVal = $isCredit ? ($sheetLocked ? ($item->credit_amount_received ?? '') : '') : ($item->party_amount_received ?? '');
                                             $balRef = $isCredit ? ($item->payment_balance ?? '') : ($item->sale_balance ?? '');
                                             $salesmanName = $item->salesman_name ?? 'No Salesman';
                                         @endphp
@@ -513,9 +513,15 @@
                             </table>
                         </div>
 
-                        <div class="text-end mt-3 mb-3 me-3">
-                            <button type="submit" class="btn btn-success">Save Changes</button>
-                        </div>
+                        @if(!$sheetLocked)
+                            <div class="text-end mt-3 mb-3 me-3">
+                                <button type="submit" class="btn btn-success">Save Changes</button>
+                            </div>
+                        @else
+                            <div class="text-center mt-3 mb-3">
+                                <span class="badge bg-secondary fs-6">This trip sheet has been saved and is locked for editing.</span>
+                            </div>
+                        @endif
                     </form>
                 @endif
             </div>

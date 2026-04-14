@@ -738,7 +738,7 @@
 
                 alert(result.message || 'Trip saved successfully');
                 saveTripModal?.hide();
-                window.location.reload();
+                window.location.href = `/trip-details?trip_date=${encodeURIComponent(tripDate)}&route_id=${encodeURIComponent(routeId)}`;
             } catch (error) {
                 alert(error.message || 'Something went wrong while saving trip');
             } finally {

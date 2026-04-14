@@ -510,14 +510,17 @@ class fileController extends Controller
         $totalProductReturn = 0;
         $totalOnlinePayment = 0;
         $totalBalance = 0;
+        $sheetLocked = false;
 
         if ($selectedRouteId) {
-            $tripIds = Trip::query()
+            $trips = Trip::query()
                 ->whereDate('trip_date', $selectedDate)
                 ->where('route_id', $selectedRouteId)
-                ->pluck('id');
+                ->get();
 
+            $tripIds = $trips->pluck('id');
             $tripCount = $tripIds->count();
+            $sheetLocked = $trips->contains('is_locked', true);
 
             if ($tripCount > 0) {
                 $query = DB::table('trip_items as ti')
@@ -528,7 +531,6 @@ class fileController extends Controller
                     ->leftJoin('payment_entries as pe', 'pe.id', '=', 'ti.payment_entry_id')
                     ->whereIn('ti.trip_id', $tripIds);
 
-                // Filter by selected salesmen
                 if ($request->filled('salesmen')) {
                     $query->whereIn('b.salesman', $request->salesmen);
                 }
@@ -583,9 +585,11 @@ class fileController extends Controller
 
                 foreach ($tripItems as $item) {
                     if ($item->payment_entry_id) {
-                        $prevTotalAmountReceived += (float) ($item->credit_amount_received ?? 0);
-                        $totalProductReturn += (float) ($item->credit_product_return ?? 0);
-                        $totalOnlinePayment += (float) ($item->credit_online_payment ?? 0);
+                        if ($sheetLocked) {
+                            $prevTotalAmountReceived += (float) ($item->credit_amount_received ?? 0);
+                            $totalProductReturn += (float) ($item->credit_product_return ?? 0);
+                            $totalOnlinePayment += (float) ($item->credit_online_payment ?? 0);
+                        }
                         $totalBalance += (float) ($item->payment_balance ?? 0);
                     } else {
                         $prevTotalAmountReceived += (float) ($item->party_amount_received ?? 0);
@@ -608,7 +612,8 @@ class fileController extends Controller
             'prevTotalAmountReceived',
             'totalProductReturn',
             'totalOnlinePayment',
-            'totalBalance'
+            'totalBalance',
+            'sheetLocked'
         ));
     }
 
@@ -650,13 +655,18 @@ class fileController extends Controller
             }
         }
 
-        DB::transaction(function () use ($saleRowsByPartyId, $creditRows, $partySaleBulkUpdate, $paymentEntryService) {
+        DB::transaction(function () use ($validated, $saleRowsByPartyId, $creditRows, $partySaleBulkUpdate, $paymentEntryService) {
             foreach ($saleRowsByPartyId as $partySaleId => $data) {
                 $partySaleBulkUpdate->applyRow($partySaleId, $data);
             }
             foreach ($creditRows as $data) {
                 $this->applyTripDetailsCreditRow($data, $paymentEntryService);
             }
+
+            Trip::query()
+                ->whereDate('trip_date', $validated['trip_date'])
+                ->where('route_id', $validated['route_id'])
+                ->update(['is_locked' => true]);
         });
 
         return redirect()

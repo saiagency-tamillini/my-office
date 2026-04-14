@@ -10,5 +10,6 @@ class Trip extends Model
         'trip_number',
         'trip_date',
         'route_id',
+        'is_locked',
     ];
 }
