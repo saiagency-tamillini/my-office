@@ -501,7 +501,7 @@
                                                 @php $serial = 1; @endphp
                                                 @foreach($creditItems as $item)
                                                     @php
-                                                        $locked = !empty($item->first_entry) || $sheetLocked;
+                                                        $locked = $sheetLocked;
                                                         $billDate = $item->bill_date ? \Carbon\Carbon::parse($item->bill_date) : null;
                                                         $aging = $billDate ? $billDate->diffInDays(\Carbon\Carbon::today(), false) : '';
                                                         $cdVal = $sheetLocked ? ($item->credit_cd ?? 0) : '';
