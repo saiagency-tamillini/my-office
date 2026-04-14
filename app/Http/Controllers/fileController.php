@@ -513,15 +513,14 @@ class fileController extends Controller
         $sheetLocked = false;
 
         if ($selectedRouteId) {
-            $trips = Trip::query()
+            $trips = Trip::with('route')
                 ->whereDate('trip_date', $selectedDate)
                 ->where('route_id', $selectedRouteId)
                 ->get();
-
             $tripIds = $trips->pluck('id');
             $tripCount = $tripIds->count();
             $sheetLocked = $trips->contains('is_locked', true);
-
+            $route_name = optional($trips->first())->route->name ?? '';
             if ($tripCount > 0) {
                 $query = DB::table('trip_items as ti')
                     ->join('trips as t', 't.id', '=', 'ti.trip_id')
@@ -600,7 +599,6 @@ class fileController extends Controller
                 }
             }
         }
-
         return view('pages.trip_details', compact(
             'routes',
             'selectedDate',
@@ -613,7 +611,8 @@ class fileController extends Controller
             'totalProductReturn',
             'totalOnlinePayment',
             'totalBalance',
-            'sheetLocked'
+            'sheetLocked',
+            'route_name'
         ));
     }
 

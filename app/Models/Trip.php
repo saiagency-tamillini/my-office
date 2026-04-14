@@ -12,4 +12,8 @@ class Trip extends Model
         'route_id',
         'is_locked',
     ];
+    public function route()
+    {
+        return $this->belongsTo(RouteMaster::class, 'route_id');
+    }
 }
