@@ -511,7 +511,7 @@ class fileController extends Controller
         $totalOnlinePayment = 0;
         $totalBalance = 0;
         $sheetLocked = false;
-
+        $route_name = '';
         if ($selectedRouteId) {
             $trips = Trip::with('route')
                 ->whereDate('trip_date', $selectedDate)
