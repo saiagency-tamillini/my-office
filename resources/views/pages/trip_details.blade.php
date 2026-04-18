@@ -615,7 +615,14 @@
                                 </div>
 
                                 @if(!$sheetLocked)
-                                    <div class="text-end mt-3 mb-3 me-3 hide-print">
+                                    <div class="d-flex justify-content-between align-items-center mt-3 mb-3 mx-3 hide-print">
+                                        <div>
+                                            @if(!empty($trip_number))
+                                                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteTripSheetModal">
+                                                    <i class="bi bi-trash"></i> Delete Trip Sheet
+                                                </button>
+                                            @endif
+                                        </div>
                                         <button type="submit" class="btn btn-success">Save Changes</button>
                                     </div>
                                 @else
@@ -624,6 +631,33 @@
                                     </div>
                                 @endif
                             </form>
+                            @if(!$sheetLocked && !empty($trip_number))
+                                <div class="modal fade" id="deleteTripSheetModal" tabindex="-1" aria-labelledby="deleteTripSheetModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-danger text-white">
+                                                <h5 class="modal-title" id="deleteTripSheetModalLabel">Delete Trip Sheet</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form method="POST" action="{{ route('trip.details.delete') }}">
+                                                @csrf
+                                                @method('DELETE')
+                                                <input type="hidden" name="trip_date" value="{{ $selectedDate }}">
+                                                <input type="hidden" name="route_id" value="{{ $selectedRouteId }}">
+                                                <input type="hidden" name="trip_number" value="{{ $trip_number }}">
+                                                <div class="modal-body">
+                                                    <p class="mb-2">Delete trip for this date <strong>{{ $selectedDate }}</strong> and route <strong>{{ $route_name }}</strong>?</p>
+                                                    <p class="text-danger mb-0"><strong>Warning:</strong> This will permanently delete this trip and all trip items. This action cannot be undone.</p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         @endif
                     </div>
             </div>
