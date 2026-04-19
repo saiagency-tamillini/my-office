@@ -231,9 +231,14 @@
 
 @section('content')
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h2 class="mb-0">Trip Details</h2>
-            <button type="button" class="btn btn-info mb-3" onclick="printPage()">Print</button>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-info mb-3" onclick="printPage()">Print</button>
+                @if($selectedRouteId && $tripCount > 0 && $tripItems->isNotEmpty())
+                    <button type="button" class="btn btn-secondary mb-3" id="calcBalanceBtnTripDetails" data-balance-calc-toggle aria-pressed="false">Calculate Total</button>
+                @endif
+            </div>
         </div>
 
         <div class="mb-3">
@@ -346,7 +351,7 @@
                                 @endphp
 
                                 <div class="table-responsive">
-                                    <table class="table table-bordered mb-0">
+                                    <table class="table table-bordered mb-0" data-balance-calc="trip_details" data-balance-calc-layout="trip_details">
                                         <thead>
                                             <tr>
                                                 <th>#</th>
@@ -665,6 +670,20 @@
     </div>
 @endsection
 @push('scripts')
+    <script>
+        window.__balanceCalc_trip_details = {
+            toggleButton: '#calcBalanceBtnTripDetails',
+            skipRowSelector: '.salesman-row, .credit-header',
+            columns: [
+                { key: 'amount', label: 'Amount', nthChild: 7 },
+                { key: 'cd', label: 'CD', nthChild: 8 },
+                { key: 'product_return', label: 'Product Return', nthChild: 9 },
+                { key: 'online_payment', label: 'Online Payment', nthChild: 10 },
+                { key: 'amount_received', label: 'Amount Received', nthChild: 11 },
+                { key: 'balance', label: 'Balance', nthChild: 12 },
+            ]
+        };
+    </script>
     <script>
         const tripDateInput = document.getElementById('tripDateInput');
         const routeSelect = document.getElementById('routeSelect');

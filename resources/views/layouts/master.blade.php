@@ -39,15 +39,15 @@
                         @auth
                             @if(is_admin())
                                 <a class="nav-link {{ request()->routeIs('salesman') ? 'active' : '' }}" href="{{ route('salesman') }}">
-                                    <i class="bi bi-list-check"></i> Sales Man
+                                    <i class="bi bi-person-badge"></i> Sales Man
                                 </a>
 
                                 <a class="nav-link {{ request()->routeIs('collections.*') ? 'active' : '' }}" href="{{ route('collections.index') }}">
-                                    <i class="bi bi-list-check"></i> Daily Collections
+                                    <i class="bi bi-cash-coin"></i> Daily Collections
                                 </a>
 
                                 <a class="nav-link {{ request()->routeIs('manualStocks') ? 'active' : '' }}" href="{{ route('manualStocks') }}">
-                                    <i class="bi bi-list-check"></i> Manual Products list
+                                    <i class="bi bi-box-seam"></i> Manual Products list
                                 </a>
 
                                 <div class="nav-item dropdown">
@@ -60,35 +60,35 @@
                                         <li>
                                             <a class="dropdown-item {{ request()->routeIs('beats.*') ? 'active' : '' }}"
                                             href="{{ route('beats.index') }}">
-                                                <i class="bi bi-list-check"></i> Beats
+                                                <i class="bi bi-pin-map"></i> Beats
                                             </a>
                                         </li>
 
                                         <li>
                                             <a class="dropdown-item {{ request()->routeIs('routes.*') ? 'active' : '' }}"
                                             href="{{ route('routes.index') }}">
-                                                <i class="bi bi-signpost"></i> Routes
+                                                <i class="bi bi-signpost-2"></i> Routes
                                             </a>
                                         </li>
 
                                         <li>
                                             <a class="dropdown-item {{ request()->routeIs('customers.*') ? 'active' : '' }}"
                                             href="{{ route('customers.index') }}">
-                                                <i class="bi bi-list-check"></i> Party Masters
+                                                <i class="bi bi-person-vcard"></i> Party Masters
                                             </a>
                                         </li>
 
                                         <li>
                                             <a class="dropdown-item {{ request()->routeIs('products.*') ? 'active' : '' }}"
                                             href="{{ route('products.index') }}">
-                                                <i class="bi bi-list-check"></i> Products
+                                                <i class="bi bi-tags"></i> Products
                                             </a>
                                         </li>
                                         @if(is_super_admin())
                                             <li>
                                                 <a class="dropdown-item {{ request()->routeIs('users.*') ? 'active' : '' }}"
                                                 href="{{ route('users.index') }}">
-                                                    <i class="bi bi-list-check"></i> Users 
+                                                    <i class="bi bi-person-gear"></i> Users
                                                 </a>
                                             </li>
                                         @endif
@@ -113,28 +113,28 @@
                                         <li>
                                             <a class="dropdown-item {{ request()->routeIs('party-sales.*') ? 'active' : '' }}"
                                             href="{{ route('party-sales.index') }}">
-                                                <i class="bi bi-list-check"></i> Party Sales
+                                                <i class="bi bi-receipt"></i> Party Sales
                                             </a>
                                         </li>
 
                                         <li>
                                             <a class="dropdown-item {{ request()->routeIs('reportTable') ? 'active' : '' }}"
                                             href="{{ route('reportTable') }}">
-                                                <i class="bi bi-list-check"></i> Salesman Collections
+                                                <i class="bi bi-clipboard-data"></i> Salesman Collections
                                             </a>
                                         </li>
 
                                         <li>
                                             <a class="dropdown-item {{ request()->routeIs('trip.report*') ? 'active' : '' }}"
                                             href="{{ route('trip.report') }}">
-                                                <i class="bi bi-list-check"></i> Trip Sheet
+                                                <i class="bi bi-truck"></i> Trip Sheet
                                             </a>
                                         </li>
 
                                         <li>
                                             <a class="dropdown-item {{ request()->routeIs('trip.details*') ? 'active' : '' }}"
                                             href="{{ route('trip.details') }}">
-                                                <i class="bi bi-card-list"></i> Trip Details
+                                                <i class="bi bi-journal-text"></i> Trip Details
                                             </a>
                                         </li>
                                     </ul>
@@ -190,6 +190,9 @@
         @yield('content')
     </div>
 
+    @include('partials.balance_calculator')
+
     @stack('scripts')
+    <script src="{{ asset('js/balance-calculator.js') }}"></script>
 </body>
 </html>

@@ -80,12 +80,6 @@
 
                     {{-- Payment Date + Checkbox --}}
                     <div class="col-12 col-md-2">
-                        <label class="form-label fw-semibold">Payment Date</label>
-                        <input type="date"
-                            name="date"
-                            class="form-control"
-                            value="{{ request('date') }}">
-
                         <div class="form-check mt-2">
                             <input class="form-check-input"
                                 type="checkbox"
@@ -97,6 +91,23 @@
                                 Include Party Sale
                             </label>
                         </div>
+                        <label class="form-label fw-semibold">Payment Date</label>
+                        <input type="date"
+                            name="date"
+                            class="form-control"
+                            value="{{ request('date') }}">
+
+                        {{-- <div class="form-check mt-2">
+                            <input class="form-check-input"
+                                type="checkbox"
+                                name="include_party_sale_collection"
+                                value="1"
+                                id="include_party_sale_collection"
+                                {{ request('include_party_sale_collection') ? 'checked' : '' }}>
+                            <label class="form-check-label small" for="include_party_sale_collection">
+                                Include Party Sale
+                            </label>
+                        </div> --}}
                     </div>
 
                     {{-- Bill Date --}}
@@ -149,6 +160,9 @@
                             <button type="button" class="btn btn-info" onclick="printCollections()">
                                 Print
                             </button>
+                            <button type="button" class="btn btn-secondary" id="calcBalanceBtnCollections" data-balance-calc-toggle aria-pressed="false">
+                                Calculate Total
+                            </button>
                         </div>
                     @endif
                     <div class="text-muted small d-flex flex-wrap gap-2">
@@ -165,7 +179,7 @@
                     @if($entries && $entries->count())
                         <div class="table-responsive">
                             <div id="printArea">
-                                <table class="table table-hover table-striped align-middle mb-0">
+                                <table class="table table-hover table-striped align-middle mb-0" data-balance-calc="collections">
                                     <thead class="table-light">
                                         <tr>
                                             <th class="hide-print">Remove</th>
@@ -333,6 +347,20 @@
     </div>
     
 
+    <script>
+        window.__balanceCalc_collections = {
+            toggleButton: '#calcBalanceBtnCollections',
+            skipRowSelector: null,
+            columns: [
+                { key: 'amount', label: 'Amount', rowSelector: 'td.amount' },
+                { key: 'cd', label: 'CD', rowSelector: 'td.cd' },
+                { key: 'product_return', label: 'Product Return', rowSelector: 'td.return' },
+                { key: 'online_payment', label: 'Online Payment', rowSelector: 'td.online' },
+                { key: 'amount_received', label: 'Amount Received', rowSelector: 'td.received' },
+                { key: 'balance', label: 'Balance', rowSelector: 'td.balance' },
+            ]
+        };
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('filterForm');

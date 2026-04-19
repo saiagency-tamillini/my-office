@@ -117,6 +117,7 @@
         @if($sales->isNotEmpty())
             <a href="{{ route('sales-report.download', request()->all()) }}" class="btn btn-success mb-3">Download Excel</a>
             <button type="button" class="btn btn-info mb-3" onclick="printPage()">Print</button>
+            <button type="button" class="btn btn-secondary mb-3" id="calcBalanceBtnSalesReport" data-balance-calc-toggle aria-pressed="false">Calculate Total</button>
         @endif
 
         @if(session('success'))
@@ -154,7 +155,7 @@
                         </h4>
                     </div>
                 @endif
-                <table class="table table-bordered">
+                <table class="table table-bordered" data-balance-calc="sales_report">
                     <thead>
                         <tr>
                             <th>S.No</th>
@@ -301,6 +302,20 @@
     </div>
 @endsection
 @push('scripts')
+    <script>
+        window.__balanceCalc_sales_report = {
+            toggleButton: '#calcBalanceBtnSalesReport',
+            skipRowSelector: '.salesman-row',
+            columns: [
+                { key: 'amount', label: 'Amount', nthChild: 6 },
+                { key: 'cd', label: 'CD', nthChild: 7 },
+                { key: 'product_return', label: 'Product Return', nthChild: 8 },
+                { key: 'online_payment', label: 'Online Payment', nthChild: 9 },
+                { key: 'amount_received', label: 'Amount Received', nthChild: 10 },
+                { key: 'balance', label: 'Balance', nthChild: 11 },
+            ]
+        };
+    </script>
     <script>
         function deleteSale(id) {
             if (!confirm('Are you sure you want to delete this record?')) return;

@@ -22,14 +22,15 @@
 .salesman-row td {
     background-color:#c0d3ef;
 }
-table input {
+/* Do not treat row-selection checkboxes like numeric inputs */
+table input:not([type="checkbox"]):not([type="radio"]) {
     border: none !important;
     background: transparent !important;
     padding: 2px 4px !important;
     width: 100% !important;
     box-sizing: border-box;
 }
-table input,
+table input:not([type="checkbox"]):not([type="radio"]),
 table select {
     border: 1px solid #ccc;   /* optional: lighter border */
     border-radius: 4px;
@@ -38,7 +39,7 @@ table select {
     box-sizing: border-box;
     font-size: 12px;
 }
-table input {
+table input:not([type="checkbox"]):not([type="radio"]) {
     border: 1px solid #ccc;
     border-radius: 4px;
     padding: 2px 4px;
@@ -48,14 +49,48 @@ table input {
     max-width: 150px;  /* maximum allowed width */
     box-sizing: border-box;
 }
-table td:nth-child(6), /* Amount */
-table td:nth-child(7), /* CD */
-table td:nth-child(8), /* Product Return */
-table td:nth-child(9), /* Online Payment */
-table td:nth-child(10) /* Amount Received */ {
-    min-width: 60px;      /* enough for 2-digit numbers */
-    max-width: 100px;     /* prevent excessive width */
-    text-align: right;    /* numeric alignment */
+/* Party sales / trip sheet: Amount…Received = cols 6–10 (no checkbox column) */
+table:not(.balance-calc-mode):not([data-balance-calc-layout="trip_details"]) td:nth-child(6),
+table:not(.balance-calc-mode):not([data-balance-calc-layout="trip_details"]) td:nth-child(7),
+table:not(.balance-calc-mode):not([data-balance-calc-layout="trip_details"]) td:nth-child(8),
+table:not(.balance-calc-mode):not([data-balance-calc-layout="trip_details"]) td:nth-child(9),
+table:not(.balance-calc-mode):not([data-balance-calc-layout="trip_details"]) td:nth-child(10) {
+    min-width: 60px;
+    max-width: 100px;
+    text-align: right;
+    white-space: nowrap;
+}
+/* Trip details: extra Type column — Amount…Received = cols 7–11 */
+table[data-balance-calc-layout="trip_details"]:not(.balance-calc-mode) td:nth-child(7),
+table[data-balance-calc-layout="trip_details"]:not(.balance-calc-mode) td:nth-child(8),
+table[data-balance-calc-layout="trip_details"]:not(.balance-calc-mode) td:nth-child(9),
+table[data-balance-calc-layout="trip_details"]:not(.balance-calc-mode) td:nth-child(10),
+table[data-balance-calc-layout="trip_details"]:not(.balance-calc-mode) td:nth-child(11) {
+    min-width: 60px;
+    max-width: 100px;
+    text-align: right;
+    white-space: nowrap;
+}
+/* Checkbox column prepended: shift +1 (party sales / trip sheet) */
+table.balance-calc-mode:not([data-balance-calc-layout="trip_details"]) td:nth-child(7),
+table.balance-calc-mode:not([data-balance-calc-layout="trip_details"]) td:nth-child(8),
+table.balance-calc-mode:not([data-balance-calc-layout="trip_details"]) td:nth-child(9),
+table.balance-calc-mode:not([data-balance-calc-layout="trip_details"]) td:nth-child(10),
+table.balance-calc-mode:not([data-balance-calc-layout="trip_details"]) td:nth-child(11) {
+    min-width: 60px;
+    max-width: 100px;
+    text-align: right;
+    white-space: nowrap;
+}
+/* Trip details + checkbox column: Amount…Received = cols 8–12 */
+table[data-balance-calc-layout="trip_details"].balance-calc-mode td:nth-child(8),
+table[data-balance-calc-layout="trip_details"].balance-calc-mode td:nth-child(9),
+table[data-balance-calc-layout="trip_details"].balance-calc-mode td:nth-child(10),
+table[data-balance-calc-layout="trip_details"].balance-calc-mode td:nth-child(11),
+table[data-balance-calc-layout="trip_details"].balance-calc-mode td:nth-child(12) {
+    min-width: 60px;
+    max-width: 100px;
+    text-align: right;
     white-space: nowrap;
 }
 table td input[type="number"] {
@@ -157,4 +192,44 @@ table td input[type="number"] {
         page-break-before: always;
     } */
 
+    .balance-calc-sticky-bar,
+    .calc-checkbox-col {
+        display: none !important;
+    }
+
+}
+
+/* Balance calculator — checkbox column (party sales / trip pages) */
+.calc-checkbox-col {
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 52px !important;
+    vertical-align: middle !important;
+    text-align: center !important;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    box-sizing: border-box;
+}
+table .calc-checkbox-col input[type="checkbox"].form-check-input,
+table th.calc-checkbox-col input[type="checkbox"].form-check-input {
+    cursor: pointer;
+    display: inline-block !important;
+    width: 1.15em !important;
+    height: 1.15em !important;
+    min-width: 1.15em !important;
+    max-width: none !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.28) !important;
+    border-radius: 0.25em !important;
+    background-color: #fff !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    appearance: auto;
+    -webkit-appearance: auto;
+    vertical-align: middle;
+}
+table.balance-calc-mode th.calc-checkbox-col {
+    vertical-align: middle !important;
 }
