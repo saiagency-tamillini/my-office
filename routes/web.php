@@ -56,6 +56,7 @@ Route::middleware(['auth', 'role:admin,super_admin'])->group(function () {
     Route::post('/trip-sheet/save', [fileController::class, 'save_trip'])->name('trip.save');
     Route::get('/trip-details', [fileController::class, 'trip_details'])->name('trip.details');
     Route::post('/trip-details/update', [fileController::class, 'trip_details_update'])->name('trip.details.update');
+    Route::delete('/trip-details/delete', [fileController::class, 'delete_trip_sheet'])->name('trip.details.delete');
     Route::get('/trip-details-routes', [fileController::class, 'trip_details_routes'])->name('trip.details.routes');
 
     Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');

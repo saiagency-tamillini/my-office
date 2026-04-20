@@ -20,6 +20,7 @@ use App\Services\PartySaleBulkUpdateService;
 use App\Services\PaymentEntryService;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 
 
@@ -328,11 +329,17 @@ class fileController extends Controller
     public function save_trip(Request $request)
     {
         $validated = $request->validate([
-            'trip_date' => ['required', 'date'],
+            'trip_date' => [
+                'required',
+                'date',
+                Rule::unique('trips', 'trip_date')->where(fn ($q) => $q->where('route_id', $request->route_id)),
+            ],
             'route_id' => ['required', 'exists:routes,id'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.party_sale_id' => ['nullable', 'integer', 'exists:party_sales,id'],
             'items.*.payment_entry_id' => ['nullable', 'integer', 'exists:payment_entries,id'],
+        ], [
+            'trip_date.unique' => 'A trip for this route on this date already exists.',
         ]);
         DB::beginTransaction();
         try {
@@ -511,7 +518,8 @@ class fileController extends Controller
         $totalOnlinePayment = 0;
         $totalBalance = 0;
         $sheetLocked = false;
-        $route_name = '';
+        $route_name = null;
+        $trip_number = null;
         if ($selectedRouteId) {
             $trips = Trip::with('route')
                 ->whereDate('trip_date', $selectedDate)
@@ -521,6 +529,7 @@ class fileController extends Controller
             $tripCount = $tripIds->count();
             $sheetLocked = $trips->contains('is_locked', true);
             $route_name = optional($trips->first())->route->name ?? '';
+            $trip_number = $tripCount > 0 ? ($trips->first()->trip_number ?? null) : null;
             if ($tripCount > 0) {
                 $query = DB::table('trip_items as ti')
                     ->join('trips as t', 't.id', '=', 'ti.trip_id')
@@ -612,8 +621,51 @@ class fileController extends Controller
             'totalOnlinePayment',
             'totalBalance',
             'sheetLocked',
-            'route_name'
+            'route_name',
+            'trip_number'
         ));
+    }
+
+    public function delete_trip_sheet(Request $request)
+    {
+        $validated = $request->validate([
+            'trip_date' => ['required', 'date'],
+            'route_id' => ['required', 'exists:routes,id'],
+            'trip_number' => ['required', 'string'],
+        ]);
+
+        $trip = Trip::query()
+            ->where('trip_number', $validated['trip_number'])
+            ->whereDate('trip_date', $validated['trip_date'])
+            ->where('route_id', $validated['route_id'])
+            ->first();
+
+        if (! $trip) {
+            return redirect()
+                ->route('trip.details', [
+                    'trip_date' => $validated['trip_date'],
+                    'route_id' => $validated['route_id'],
+                ])
+                ->with('error', 'No trip sheet found to delete.');
+        }
+
+        if ($trip->is_locked) {
+            return redirect()
+                ->route('trip.details', [
+                    'trip_date' => $validated['trip_date'],
+                    'route_id' => $validated['route_id'],
+                ])
+                ->with('error', 'This trip sheet is locked and cannot be deleted.');
+        }
+
+        DB::transaction(function () use ($trip) {
+            TripItem::where('trip_id', $trip->id)->delete();
+            $trip->delete();
+        });
+
+        return redirect()
+            ->route('trip.details')
+            ->with('success', 'Trip sheet "' . $validated['trip_number'] . '" deleted successfully.');
     }
 
     public function trip_details_update(Request $request, PartySaleBulkUpdateService $partySaleBulkUpdate, PaymentEntryService $paymentEntryService)

@@ -661,8 +661,32 @@
         const saveTripModalEl = document.getElementById('saveTripModal');
         const saveTripModal = saveTripModalEl ? new bootstrap.Modal(saveTripModalEl) : null;
         const saveTripForm = document.getElementById('saveTripForm');
+        const saveTripErrorEl = document.getElementById('saveTripError');
+
+        function clearSaveTripError() {
+            if (!saveTripErrorEl) return;
+            saveTripErrorEl.textContent = '';
+            saveTripErrorEl.classList.add('d-none');
+        }
+
+        function showSaveTripError(message) {
+            if (!saveTripErrorEl) {
+                alert(message);
+                return;
+            }
+            saveTripErrorEl.textContent = message;
+            saveTripErrorEl.classList.remove('d-none');
+        }
+
+        function firstValidationMessage(errors) {
+            if (!errors || typeof errors !== 'object') return null;
+            const firstKey = Object.keys(errors)[0];
+            if (!firstKey || !Array.isArray(errors[firstKey])) return null;
+            return errors[firstKey][0] || null;
+        }
 
         saveTripBtn?.addEventListener('click', function () {
+            clearSaveTripError();
             saveTripModal?.show();
         });
 
@@ -714,6 +738,7 @@
 
             confirmSaveTripBtn.disabled = true;
             confirmSaveTripBtn.textContent = 'Saving...';
+            clearSaveTripError();
 
             try {
                 const response = await fetch('{{ route('trip.save') }}', {
@@ -730,17 +755,26 @@
                     })
                 });
 
-                const result = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(result.message || 'Failed to save trip');
+                let result = {};
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    showSaveTripError('Invalid response from server.');
+                    return;
                 }
 
+                if (!response.ok) {
+                    const msg = firstValidationMessage(result.errors) || result.message || 'Failed to save trip';
+                    showSaveTripError(msg);
+                    return;
+                }
+
+                clearSaveTripError();
                 alert(result.message || 'Trip saved successfully');
                 saveTripModal?.hide();
                 window.location.href = `/trip-details?trip_date=${encodeURIComponent(tripDate)}&route_id=${encodeURIComponent(routeId)}`;
             } catch (error) {
-                alert(error.message || 'Something went wrong while saving trip');
+                showSaveTripError(error.message || 'Something went wrong while saving trip');
             } finally {
                 confirmSaveTripBtn.disabled = false;
                 confirmSaveTripBtn.textContent = 'Save';

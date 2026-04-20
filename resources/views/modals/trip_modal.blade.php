@@ -8,6 +8,7 @@
       <div class="modal-body">
         <form id="saveTripForm">
             @csrf
+            <div id="saveTripError" class="alert alert-danger py-2 small d-none" role="alert"></div>
             <div class="mb-2">
                 <label class="form-label">Trip Date</label>
                 <input type="date" class="form-control" name="trip_date" value="{{ \Carbon\Carbon::today()->format('Y-m-d') }}" required>
