@@ -62,6 +62,11 @@ select.form-select,
 .balance-calc-sticky-bar .text-white-50 {
     color: rgba(255, 255, 255, 0.65) !important;
 }
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
 
 @media print {
 

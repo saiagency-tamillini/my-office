@@ -194,5 +194,6 @@
 
     @stack('scripts')
     <script src="{{ asset('js/balance-calculator.js') }}"></script>
+    <script src="{{ asset('js/global.js') }}"></script>
 </body>
 </html>
