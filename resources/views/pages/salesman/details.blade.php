@@ -3,7 +3,7 @@
 @section('content')
 <div class="container">
     <h3>Payment Entries</h3>
-    
+    <a href="{{ route('salesman.pdf', $customer->id) }} "class="btn btn-danger mb-3"> Download </a>
     @foreach($paymentEntries as $billNo => $entries)
         @php
             $isPaid = optional($entries->first())->is_paid;

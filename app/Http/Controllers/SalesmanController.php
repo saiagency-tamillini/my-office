@@ -14,6 +14,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Support\Facades\Response;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class SalesmanController extends Controller
 {
@@ -406,6 +407,42 @@ class SalesmanController extends Controller
             $query->orderBy('beats.salesman')->orderBy('party_sales.bill_date');
         }
         return $query;
+    }
+    public function downloadPdf($customerId)
+    {
+        $customer = Customer::findOrFail($customerId);
+
+        $paymentEntries = PaymentEntry::with('customer')
+            ->where('customer_id', $customer->id)
+            ->orderBy('bill_no')
+            ->orderBy('created_at')
+            ->get()
+            ->groupBy('bill_no')
+            ->map(function ($entries, $billNo) {
+
+                $isPaid = $entries->contains(fn($entry) =>
+                    $entry->balance == 0 || $entry->status === 'complete'
+                );
+
+                return $entries->map(function ($entry) use ($isPaid) {
+                    $entry->is_paid = $isPaid;
+                    return $entry;
+                });
+            });
+
+        $pendingBills = $paymentEntries->filter(fn($entries) =>
+            optional($entries->first())->is_paid === false
+        );
+
+        $completedBills = $paymentEntries->filter(fn($entries) =>
+            optional($entries->first())->is_paid === true
+        );
+
+        $paymentEntries = $pendingBills->merge($completedBills);
+        $pdf = Pdf::loadView('pages.salesman.pdf', compact('customer', 'paymentEntries'));
+        return $pdf->stream('salesman-report-'.$customer->name.'.pdf');
+
+        // return $pdf->download('salesman-report-'.$customer->name.'.pdf');
     }
 
 }
