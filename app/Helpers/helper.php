@@ -38,3 +38,17 @@ if (! function_exists('is_admin')) {
         return $role_name === 'admin' || $role_name === 'super_admin';
     }
 }
+if (! function_exists('is_accountant')) {
+    function is_accountant(): ?string
+    {
+        $role_name = auth()->check() ? auth()->user()->role?->name : null;
+        return $role_name === 'super_admin' || $role_name === 'accountant' || $role_name === 'admin';
+    }
+}
+if (! function_exists('is_mis_access')) {
+    function is_mis_access(): ?string
+    {
+        $role_name = auth()->check() ? auth()->user()->role?->name : null;
+        return $role_name === 'super_admin' || $role_name === 'mis_access' || $role_name === 'admin';
+    }
+}

@@ -37,64 +37,71 @@
                         </a> --}}
 
                         @auth
-                            @if(is_admin())
-                                <a class="nav-link {{ request()->routeIs('salesman') ? 'active' : '' }}" href="{{ route('salesman') }}">
-                                    <i class="bi bi-person-badge"></i> Sales Man
-                                </a>
-
-                                <a class="nav-link {{ request()->routeIs('collections.*') ? 'active' : '' }}" href="{{ route('collections.index') }}">
-                                    <i class="bi bi-cash-coin"></i> Daily Collections
-                                </a>
-
-                                <a class="nav-link {{ request()->routeIs('manualStocks') ? 'active' : '' }}" href="{{ route('manualStocks') }}">
-                                    <i class="bi bi-box-seam"></i> Manual Products list
-                                </a>
-
-                                <div class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle {{ request()->routeIs('beats.*') || request()->routeIs('routes.*') || request()->routeIs('customers.*') || request()->routeIs('products.*') ? 'active' : '' }}"
-                                    href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-people-fill"></i> Customers
+                            @if(is_admin() || is_mis_access() || is_accountant())
+                                @if(is_accountant())
+                                    <a class="nav-link {{ request()->routeIs('salesman') ? 'active' : '' }}" href="{{ route('salesman') }}">
+                                        <i class="bi bi-person-badge"></i> Sales Man
                                     </a>
+                                @endif
+                                @if(is_accountant())
+                                    <a class="nav-link {{ request()->routeIs('collections.*') ? 'active' : '' }}" href="{{ route('collections.index') }}">
+                                        <i class="bi bi-cash-coin"></i> Daily Collections
+                                    </a>
+                                @endif
+                                @if(is_mis_access())
+                                    <a class="nav-link {{ request()->routeIs('manualStocks') ? 'active' : '' }}" href="{{ route('manualStocks') }}">
+                                        <i class="bi bi-box-seam"></i> Manual Products list
+                                    </a>
+                                @endif
+                                @if(is_mis_access())
+                                    <div class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle {{ request()->routeIs('beats.*') || request()->routeIs('routes.*') || request()->routeIs('customers.*') || request()->routeIs('products.*') ? 'active' : '' }}"
+                                        href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-people-fill"></i> Customers
+                                        </a>
 
-                                    <ul class="dropdown-menu dropdown-menu-dark">
-                                        <li>
-                                            <a class="dropdown-item {{ request()->routeIs('beats.*') ? 'active' : '' }}"
-                                            href="{{ route('beats.index') }}">
-                                                <i class="bi bi-pin-map"></i> Beats
-                                            </a>
-                                        </li>
+                                        <ul class="dropdown-menu dropdown-menu-dark">
+                                            @if(is_admin())
+                                                <li>
+                                                    <a class="dropdown-item {{ request()->routeIs('beats.*') ? 'active' : '' }}"
+                                                    href="{{ route('beats.index') }}">
+                                                        <i class="bi bi-pin-map"></i> Beats
+                                                    </a>
+                                                </li>
 
-                                        <li>
-                                            <a class="dropdown-item {{ request()->routeIs('routes.*') ? 'active' : '' }}"
-                                            href="{{ route('routes.index') }}">
-                                                <i class="bi bi-signpost-2"></i> Routes
-                                            </a>
-                                        </li>
+                                                <li>
+                                                    <a class="dropdown-item {{ request()->routeIs('routes.*') ? 'active' : '' }}"
+                                                    href="{{ route('routes.index') }}">
+                                                        <i class="bi bi-signpost-2"></i> Routes
+                                                    </a>
+                                                </li>
 
-                                        <li>
-                                            <a class="dropdown-item {{ request()->routeIs('customers.*') ? 'active' : '' }}"
-                                            href="{{ route('customers.index') }}">
-                                                <i class="bi bi-person-vcard"></i> Party Masters
-                                            </a>
-                                        </li>
-
-                                        <li>
-                                            <a class="dropdown-item {{ request()->routeIs('products.*') ? 'active' : '' }}"
-                                            href="{{ route('products.index') }}">
-                                                <i class="bi bi-tags"></i> Products
-                                            </a>
-                                        </li>
-                                        @if(is_super_admin())
-                                            <li>
-                                                <a class="dropdown-item {{ request()->routeIs('users.*') ? 'active' : '' }}"
-                                                href="{{ route('users.index') }}">
-                                                    <i class="bi bi-person-gear"></i> Users
-                                                </a>
-                                            </li>
-                                        @endif
-                                    </ul>
-                                </div>
-
+                                                <li>
+                                                    <a class="dropdown-item {{ request()->routeIs('customers.*') ? 'active' : '' }}"
+                                                    href="{{ route('customers.index') }}">
+                                                        <i class="bi bi-person-vcard"></i> Party Masters
+                                                    </a>
+                                                </li>
+                                            @endif
+                                            @if(is_mis_access())
+                                                <li>
+                                                    <a class="dropdown-item {{ request()->routeIs('products.*') ? 'active' : '' }}"
+                                                    href="{{ route('products.index') }}">
+                                                        <i class="bi bi-tags"></i> Products
+                                                    </a>
+                                                </li>
+                                            @endif
+                                            @if(is_super_admin())
+                                                <li>
+                                                    <a class="dropdown-item {{ request()->routeIs('users.*') ? 'active' : '' }}"
+                                                    href="{{ route('users.index') }}">
+                                                        <i class="bi bi-person-gear"></i> Users
+                                                    </a>
+                                                </li>
+                                            @endif
+                                        </ul>
+                                    </div>
+                                @endif
                                 <div class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle
                                         {{ request()->routeIs('fileUpload') || request()->routeIs('party-sales.*') || request()->routeIs('reportTable') || request()->routeIs('trip.*') ? 'active' : '' }}"
@@ -103,40 +110,46 @@
                                     </a>
 
                                     <ul class="dropdown-menu dropdown-menu-dark">
-                                        <li>
-                                            <a class="dropdown-item {{ request()->routeIs('fileUpload') ? 'active' : '' }}"
-                                            href="{{ route('fileUpload') }}">
-                                                <i class="bi bi-upload"></i> File Upload
-                                            </a>
-                                        </li>
-
-                                        <li>
-                                            <a class="dropdown-item {{ request()->routeIs('party-sales.*') ? 'active' : '' }}"
-                                            href="{{ route('party-sales.index') }}">
-                                                <i class="bi bi-receipt"></i> Party Sales
-                                            </a>
-                                        </li>
-
-                                        <li>
-                                            <a class="dropdown-item {{ request()->routeIs('reportTable') ? 'active' : '' }}"
-                                            href="{{ route('reportTable') }}">
-                                                <i class="bi bi-clipboard-data"></i> Salesman Collections
-                                            </a>
-                                        </li>
-
-                                        <li>
-                                            <a class="dropdown-item {{ request()->routeIs('trip.report*') ? 'active' : '' }}"
-                                            href="{{ route('trip.report') }}">
-                                                <i class="bi bi-truck"></i> Trip Sheet
-                                            </a>
-                                        </li>
-
-                                        <li>
-                                            <a class="dropdown-item {{ request()->routeIs('trip.details*') ? 'active' : '' }}"
-                                            href="{{ route('trip.details') }}">
-                                                <i class="bi bi-journal-text"></i> Trip Details
-                                            </a>
-                                        </li>
+                                        @if(is_mis_access())
+                                            <li>
+                                                <a class="dropdown-item {{ request()->routeIs('fileUpload') ? 'active' : '' }}"
+                                                href="{{ route('fileUpload') }}">
+                                                    <i class="bi bi-upload"></i> File Upload
+                                                </a>
+                                            </li>
+                                        @endif
+                                        @if(is_accountant() || is_mis_access())
+                                            <li>
+                                                <a class="dropdown-item {{ request()->routeIs('party-sales.*') ? 'active' : '' }}"
+                                                href="{{ route('party-sales.index') }}">
+                                                    <i class="bi bi-receipt"></i> Party Sales
+                                                </a>
+                                            </li>
+                                        @endif
+                                        @if(is_accountant())
+                                            <li>
+                                                <a class="dropdown-item {{ request()->routeIs('reportTable') ? 'active' : '' }}"
+                                                href="{{ route('reportTable') }}">
+                                                    <i class="bi bi-clipboard-data"></i> Salesman Collections
+                                                </a>
+                                            </li>
+                                        @endif
+                                        @if(is_mis_access())
+                                            <li>
+                                                <a class="dropdown-item {{ request()->routeIs('trip.report*') ? 'active' : '' }}"
+                                                href="{{ route('trip.report') }}">
+                                                    <i class="bi bi-truck"></i> Trip Sheet
+                                                </a>
+                                            </li>
+                                        @endif
+                                        @if(is_accountant())
+                                            <li>
+                                                <a class="dropdown-item {{ request()->routeIs('trip.details*') ? 'active' : '' }}"
+                                                href="{{ route('trip.details') }}">
+                                                    <i class="bi bi-journal-text"></i> Trip Details
+                                                </a>
+                                            </li>
+                                        @endif
                                     </ul>
                                 </div>
                             @endif

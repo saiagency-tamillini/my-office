@@ -25,7 +25,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/file-upload', [App\Http\Controllers\fileController::class, 'file_upload'])->name('fileUpload');
 });
 
-Route::middleware(['auth', 'role:admin,super_admin'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::get('/salesman-report', [App\Http\Controllers\SalesmanController::class, 'report_table'])->name('reportTable');
     Route::post('/upload-excel', [fileController::class, 'uploadExcel'])->name('upload.excel');
 

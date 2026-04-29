@@ -1,7 +1,7 @@
 @extends('layouts.master')
 @section('title', 'Excel Upload')
 @section('content')
-    @if(is_admin())
+    @if(is_admin() || is_mis_access())
         <div class="row justify-content-center">
             <div class="col-md-6">
 

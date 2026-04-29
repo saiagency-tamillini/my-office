@@ -27,7 +27,12 @@ use Illuminate\Validation\Rule;
 
 class fileController extends Controller
 {
-    public function file_upload (){return view('files.file_upload');}
+    public function file_upload (){
+        if(is_accountant()) {
+            return redirect()->route('home')->with('error', 'You are not authorized to access this page.');
+        }
+        return view('files.file_upload');
+    }
 
     public function uploadExcel(Request $request)
     {
@@ -698,8 +703,9 @@ class fileController extends Controller
         $saleRowsByPartyId = [];
         $creditRows = [];
 
-        foreach ($items as $row) {
+        foreach ($items as $tripItemId => $row) {
             if (! empty($row['payment_entry_id'])) {
+                $row['trip_item_id'] = $tripItemId;
                 $creditRows[] = $row;
             } else {
                 $saleRowsByPartyId[(int) $row['party_sale_id']] = $row;
@@ -731,42 +737,58 @@ class fileController extends Controller
     private function applyTripDetailsCreditRow(array $data, PaymentEntryService $paymentEntryService): void
     {
         $partySaleId = (int) $data['party_sale_id'];
-        $entryId = (int) $data['payment_entry_id'];
-
-        $entry = PaymentEntry::query()->find($entryId);
-        if (! $entry || (int) $entry->part_sale_id !== $partySaleId) {
-            return;
-        }
-
-        $entry->update([
-            'cd' => $data['cd'] ?? $entry->cd,
-            'product_return' => $data['product_return'] ?? $entry->product_return,
-            'online_payment' => $data['online_payment'] ?? $entry->online_payment,
-            'amount_received' => $data['amount_received'] ?? $entry->amount_received,
-        ]);
-
-        $paymentEntryService->syncBalancesForPartySale($partySaleId);
-
-        $entry->refresh();
-        $entry->update([
-            'status' => (float) $entry->balance == 0 ? 'complete' : 'pending',
-        ]);
-
-        $latest = PaymentEntry::query()
-            ->where('part_sale_id', $partySaleId)
-            ->orderByDesc('id')
-            ->first();
+        $tripItemId = (int) $data['trip_item_id'];
 
         $sale = PartySale::query()->find($partySaleId);
-        if ($sale && $latest) {
-            $sale->cd = $latest->cd;
-            $sale->product_return = $latest->product_return;
-            $sale->online_payment = $latest->online_payment;
-            $sale->amount_received = $latest->amount_received;
-            $sale->balance = $latest->balance;
-            $sale->first_entry = true;
-            $sale->save();
+        if (! $sale) {
+            return;
         }
+        
+        $newEntry = PaymentEntry::create([
+            'part_sale_id'     => $sale->id,
+            'customer_id'      => $sale->customer_id,
+            'bill_no'          => $sale->bill_no,
+            'amount'           => $sale->amount,
+            'cd'               => $data['cd'] ?? null,
+            'product_return'   => $data['product_return'] ?? null,
+            'online_payment'   => $data['online_payment'] ?? null,
+            'amount_received'  => $data['amount_received'] ?? null,
+            'balance'          => $data['balance'] ?? 0,
+            'remarks'          => $data['remarks'] ?? null,
+            'status'           => (isset($data['balance']) && $data['balance'] == 0) ? 'complete' : 'pending',
+        ]);
+        TripItem::where('id', $tripItemId)
+            ->update([
+                'payment_entry_id' => $newEntry->id
+            ]);
+        // $entry->update([
+        //     'cd' => $data['cd'] ?? $entry->cd,
+        //     'product_return' => $data['product_return'] ?? $entry->product_return,
+        //     'online_payment' => $data['online_payment'] ?? $entry->online_payment,
+        //     'amount_received' => $data['amount_received'] ?? $entry->amount_received,
+        // ]);
+        // $paymentEntryService->syncBalancesForPartySale($partySaleId);
+
+        // $entry->refresh();
+        // $entry->update([
+        //     'status' => (float) $entry->balance == 0 ? 'complete' : 'pending',
+        // ]);
+
+        // $latest = PaymentEntry::query()
+        //     ->where('part_sale_id', $partySaleId)
+        //     ->orderByDesc('id')
+        //     ->first();
+
+        // $sale = PartySale::query()->find($partySaleId);
+        // if ($sale && $latest) {
+        //     $sale->cd = $latest->cd;
+        //     $sale->product_return = $latest->product_return;
+        //     $sale->online_payment = $latest->online_payment;
+        //     $sale->amount_received = $latest->amount_received;
+        //     $sale->balance = $latest->balance;
+        //     $sale->first_entry = true;
+        //     $sale->save();
+        // }
     }
 
     public function trip_details_routes(Request $request)
