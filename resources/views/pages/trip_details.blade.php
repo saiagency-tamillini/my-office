@@ -361,12 +361,12 @@
                                                 <th>Bill No</th>
                                                 <th class="hide-print">Bill Date</th>
                                                 <th class="hide-print">Aging<br>(days)</th>
-                                                <th>Amount</th>
+                                                <th class="hide-print">Amount</th>
                                                 <th>CD</th>
                                                 <th>Product Return</th>
                                                 <th>Online Payment</th>
                                                 <th>Amount Received</th>
-                                                <th class="hide-print">Balance</th>
+                                                <th >Balance</th>
                                                 {{-- <th class="hide-print">Beat</th> --}}
                                                 {{-- <th class="hide-print">Status</th> --}}
                                             </tr>
@@ -432,7 +432,7 @@
                                                     </td>
 
                                                     <td class="aging-col hide-print">{{ $aging }}</td>
-                                                    <td class="bold-font">{{ $item->sale_amount ?? '-' }}</td>
+                                                    <td class="bold-font hide-print">{{ $item->sale_amount ?? '-' }}</td>
 
                                                     <td>
                                                         @if($locked)
@@ -480,7 +480,7 @@
                                                         @endif
                                                     </td>
 
-                                                    <td class="hide-print balance-col">
+                                                    <td class="balance-col">
                                                         @if($locked)
                                                             {{ $item->display_balance ?? '-' }}
                                                         @else
@@ -540,7 +540,7 @@
                                                         </td>
 
                                                         <td class="aging-col hide-print">{{ $aging }}</td>
-                                                        <td class="bold-font">{{ $item->sale_amount ?? '-' }}</td>
+                                                        <td class="bold-font hide-print">{{ $item->sale_amount ?? '-' }}</td>
 
                                                         <td>
                                                             @if($locked)
@@ -588,7 +588,7 @@
                                                             @endif
                                                         </td>
 
-                                                        <td class="hide-print balance-col">
+                                                        <td class="balance-col">
                                                             @if($locked)
                                                                 {{ $item->display_balance ?? '-' }}
                                                             @else
@@ -821,7 +821,7 @@
             document.getElementById('submitWithDenomination')?.addEventListener('click', function () {
                 const totalAmountReceived = parseInt(document.getElementById('totalAmountReceived').textContent) || 0;
                 const totalDen = parseInt(document.getElementById('denominationTotal').value) || 0;
-                if ((PrevTotalAmount + totalDen) !== totalAmountReceived) {
+                if (totalDen !== totalAmountReceived) {
                     document.getElementById('denominationError').classList.remove('d-none');
                 } else {
                     document.getElementById('denominationError').classList.add('d-none');
