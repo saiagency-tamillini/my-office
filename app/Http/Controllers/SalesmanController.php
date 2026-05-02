@@ -15,9 +15,17 @@ use Illuminate\Support\Facades\Response;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\SalesReportService;
 
 class SalesmanController extends Controller
 {
+    protected $salesReportService;
+
+    public function __construct(SalesReportService $salesReportService)
+    {
+        $this->salesReportService = $salesReportService;
+    }
+
     public function index()
     {
         $salesmen = Beat::with('customers')->withCount('customers')->get()
@@ -92,74 +100,8 @@ class SalesmanController extends Controller
     {
         $salesmen = Beat::select('salesman')->distinct()->pluck('salesman');
         $beats = Beat::orderBy('name')->get();
-
-        // $partySaleIds = PartySale::whereExists(function ($query) {
-        //     $query->select(DB::raw(1))
-        //         ->from('payment_entries as pe1')
-        //         ->whereColumn('pe1.part_sale_id', 'party_sales.id')
-        //         ->whereRaw('pe1.created_at = (
-        //             SELECT MAX(pe2.created_at)
-        //             FROM payment_entries pe2
-        //             WHERE pe2.part_sale_id = pe1.part_sale_id
-        //         )')
-        //         ->where('pe1.status', 'pending');
-        // })
-        // ->pluck('id');
-        // $latestPayments = DB::table('payment_entries as pe1')
-        //     ->select('pe1.*')
-        //     ->whereRaw('pe1.id = (
-        //         SELECT MAX(pe2.id)
-        //         FROM payment_entries pe2
-        //         WHERE pe2.part_sale_id = pe1.part_sale_id
-        //     )');
-
-        // $query = PartySale::with('beat')
-        //     ->join('beats', 'party_sales.beat_id', '=', 'beats.id')
-        //     ->leftJoin('customers', 'party_sales.customer_id', '=', 'customers.id')
-        //     ->joinSub($latestPayments, 'latest_payment', function ($join) {
-        //         $join->on('latest_payment.part_sale_id', '=', 'party_sales.id');
-        //     })
-        //     ->whereIn('party_sales.id', $partySaleIds) 
-        //     ->orderBy('beats.salesman')
-        //     ->orderBy('party_sales.bill_date')
-        //     ->select(
-        //         'party_sales.*',
-        //         'customers.name as customer_name',
-        //         'latest_payment.amount_received as latest_amount_received',
-        //         'latest_payment.balance as latest_balance',
-        //         'latest_payment.payment_date as latest_payment_date',
-        //         'latest_payment.status as latest_status'
-        //     );
-        // // if ($request->filled('bill_date')) {
-        // //     $date =  Carbon::parse($request->bill_date)->format('Y-m-d');
-        // //     $query->whereDate('party_sales.bill_date', $date);
-        // // }
-        // if ($request->filled('from_date') && $request->filled('to_date')) {
-        //     $from = Carbon::parse($request->from_date)->startOfDay();
-        //     $to   = Carbon::parse($request->to_date)->endOfDay();
-
-        //     $query->whereBetween('party_sales.bill_date', [$from, $to]);
-        // } elseif ($request->filled('from_date')) {
-        //     $from = Carbon::parse($request->from_date)->startOfDay();
-        //     $query->where('party_sales.bill_date', '>=', $from);
-        // } elseif ($request->filled('to_date')) {
-        //     $to = Carbon::parse($request->to_date)->endOfDay();
-        //     $query->where('party_sales.bill_date', '<=', $to);
-        // }
-
-        // if ($request->filled('salesmen')) {
-        //     $query->whereIn('beats.salesman', $request->salesmen);
-        // }
-
-        // if ($request->has('sort') && in_array($request->sort, ['asc', 'desc'])) {
-        //     $query->orderBy('customer_name', $request->sort);
-        // }
-
-        // if ($request->filled('beat_id')) {
-        //     $query->where('party_sales.beat_id', $request->beat_id);
-        // }
-
-        $query = $this->buildReportQuery($request);
+        // $query = $this->buildReportQuery($request);
+        $query = $this->salesReportService->buildReportQuery($request);
         $sales = $query->get();
         $customers = Customer::with('beat')->get();
         $selectedBeats = collect();
@@ -171,7 +113,9 @@ class SalesmanController extends Controller
 
     public function downloadReport(Request $request)
     {
-        $sales = $this->buildReportQuery($request)->get();
+        // $sales = $this->buildReportQuery($request)->get();
+        $query = $this->salesReportService->buildReportQuery($request);
+        $sales = $query->get();
 
         
         // Group by salesman (same as your existing approach)

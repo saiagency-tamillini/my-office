@@ -191,6 +191,13 @@
                                     <span>Logout</span>
                                 </button>
                             </form>
+                            @if(is_admin()) 
+                                <a href="{{ route('sales.mail.page') }}"
+                                class="btn btn-sm btn-primary d-flex align-items-center gap-1">
+                                    <i class="bi bi-envelope-fill"></i>
+                                    <span>Mail</span>
+                                </a>
+                            @endif
                         @endauth
                     </div>
 
