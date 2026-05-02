@@ -7,6 +7,8 @@ use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\SendNoticationMail;
 
 class AuthController extends Controller
 {
@@ -47,10 +49,13 @@ class AuthController extends Controller
         $username = $credentials['username'];
         $password = $credentials['password'];
 
-        // allow login by username OR email
-        // $field = filter_var($username, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+    //    dd(1);
         if (Auth::attempt(['username' => $username, 'password' => $password], true)) {
             $request->session()->regenerate();
+            // Logged in user
+            $user = Auth::user();
+            // Send mail
+            Mail::to($user->email)->send(new SendNoticationMail($user));
             return redirect()->intended(route('fileUpload'));
         }
 
