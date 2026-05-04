@@ -70,8 +70,7 @@
                             <div class="col-md-2">
                                 <input type="date"
                                     name="from_date"
-                                    class="form-control"
-                                    required>
+                                    class="form-control">
                             </div>
 
                             <div class="col-md-2">

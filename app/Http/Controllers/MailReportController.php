@@ -30,7 +30,7 @@ class MailReportController extends Controller
         $request->validate([
             'salesmen' => 'required|array',
             'beat_ids' => 'required|array',
-            'from_date' => 'required',
+            // 'from_date' => 'required',
         ]);
         try {
             $query = $this->salesReportService->buildReportQuery($request);

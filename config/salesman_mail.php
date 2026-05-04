@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'BALA' => 'saiagency0625@gmail.com',
+    'BALA' => 'balanagul0219@gmail.com',
     'SHRI MAHESHWARAN' => 'saiagency0625@gmail.com',
-    'NAGARAJ' => 'saiagency0625@gmail.com',
-    'ASHIK' => 'saiagency0625@gmail.com',
+    'NAGARAJ' => 'Sathishsingaram@gmail.com',
+    'ASHIK' => 'srimaheshkn@gmail.com',
 ];
