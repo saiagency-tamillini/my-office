@@ -146,10 +146,16 @@
                                             <li>
                                                 <a class="dropdown-item {{ request()->routeIs('trip.details*') ? 'active' : '' }}"
                                                 href="{{ route('trip.details') }}">
-                                                    <i class="bi bi-journal-text"></i> Trip Details
+                                                    <i class="bi bi-card-list"></i> Trip Details
                                                 </a>
                                             </li>
                                         @endif
+                                        <li>
+                                            <a class="dropdown-item {{ request()->routeIs('bill.number.report') ? 'active' : '' }}"
+                                            href="{{ route('bill.number.report') }}">
+                                                <i class="bi bi-file-earmark-bar-graph"></i> Bill Number Report
+                                            </a>
+                                        </li>
                                     </ul>
                                 </div>
                             @endif

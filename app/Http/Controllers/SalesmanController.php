@@ -388,6 +388,47 @@ class SalesmanController extends Controller
 
         // return $pdf->download('salesman-report-'.$customer->name.'.pdf');
     }
+    public function bill_number_report(Request $request)
+    {
+        $billSummary = collect();
 
+        if ($request->filled('from_date')) {
+
+            $from = $request->from_date;
+            $to   = $request->to_date ?? $from;
+
+                $billSummary = DB::table('party_sales as ps1')
+                    ->selectRaw("
+                        REGEXP_SUBSTR(ps1.bill_no, '^[A-Za-z]+') as prefix,
+                        COUNT(*) as total_count,
+
+                        MIN(CAST(REGEXP_SUBSTR(ps1.bill_no, '[0-9]+') AS UNSIGNED)) as min_no,
+                        MAX(CAST(REGEXP_SUBSTR(ps1.bill_no, '[0-9]+') AS UNSIGNED)) as max_no
+                    ")
+                    ->whereBetween('ps1.bill_date', [$from, $to])
+                    ->groupBy('prefix')
+                    ->get();
+                    $billSummary = $billSummary->map(function ($item) use ($from, $to) {
+
+                // START BILL (exact from DB)
+                $item->start_bill = DB::table('party_sales')
+                    ->whereBetween('bill_date', [$from, $to])
+                    ->whereRaw("REGEXP_SUBSTR(bill_no, '^[A-Za-z]+') = ?", [$item->prefix])
+                    ->orderByRaw("CAST(REGEXP_SUBSTR(bill_no, '[0-9]+') AS UNSIGNED) ASC")
+                    ->value('bill_no');
+
+                // END BILL (exact from DB)
+                $item->end_bill = DB::table('party_sales')
+                    ->whereBetween('bill_date', [$from, $to])
+                    ->whereRaw("REGEXP_SUBSTR(bill_no, '^[A-Za-z]+') = ?", [$item->prefix])
+                    ->orderByRaw("CAST(REGEXP_SUBSTR(bill_no, '[0-9]+') AS UNSIGNED) DESC")
+                    ->value('bill_no');
+
+                return $item;
+            });
+        }
+
+        return view('pages.bill_number_report', compact('billSummary'));
+    }
 }
 
