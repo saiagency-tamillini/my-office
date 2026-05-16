@@ -391,24 +391,25 @@ class SalesmanController extends Controller
     public function bill_number_report(Request $request)
     {
         $billSummary = collect();
+        $billDetails = collect();
 
         if ($request->filled('from_date')) {
 
             $from = $request->from_date;
             $to   = $request->to_date ?? $from;
 
-                $billSummary = DB::table('party_sales as ps1')
-                    ->selectRaw("
-                        REGEXP_SUBSTR(ps1.bill_no, '^[A-Za-z]+') as prefix,
-                        COUNT(*) as total_count,
+                        $billSummary = DB::table('party_sales as ps1')
+                ->selectRaw("
+                    REGEXP_SUBSTR(ps1.bill_no, '^[A-Za-z]+') as prefix,
+                    COUNT(*) as total_count,
 
-                        MIN(CAST(REGEXP_SUBSTR(ps1.bill_no, '[0-9]+') AS UNSIGNED)) as min_no,
-                        MAX(CAST(REGEXP_SUBSTR(ps1.bill_no, '[0-9]+') AS UNSIGNED)) as max_no
-                    ")
-                    ->whereBetween('ps1.bill_date', [$from, $to])
-                    ->groupBy('prefix')
-                    ->get();
-                    $billSummary = $billSummary->map(function ($item) use ($from, $to) {
+                    MIN(CAST(REGEXP_SUBSTR(ps1.bill_no, '[0-9]+') AS UNSIGNED)) as min_no,
+                    MAX(CAST(REGEXP_SUBSTR(ps1.bill_no, '[0-9]+') AS UNSIGNED)) as max_no
+                ")
+                ->whereBetween('ps1.bill_date', [$from, $to])
+                ->groupBy('prefix')
+                ->get();
+            $billSummary = $billSummary->map(function ($item) use ($from, $to) {
 
                 // START BILL (exact from DB)
                 $item->start_bill = DB::table('party_sales')
@@ -426,9 +427,22 @@ class SalesmanController extends Controller
 
                 return $item;
             });
+
+            $latestPayment = DB::table('payment_entries') 
+                ->select('bill_no', DB::raw('MAX(id) as latest_id')) 
+                ->groupBy('bill_no'); 
+            $billDetails = DB::table('party_sales as ps') 
+                ->leftJoin('customers as c', 'c.id', '=', 'ps.customer_id') 
+                ->leftJoinSub($latestPayment, 'lp', function ($join) { 
+                    $join->on('lp.bill_no', '=', 'ps.bill_no'); 
+                }) 
+                ->leftJoin('payment_entries as pe', 'pe.id', '=', 'lp.latest_id') 
+                ->select( 'ps.bill_no', 'c.name as customer_name', DB::raw("COALESCE(pe.status, 'Pending') as payment_status") ) 
+                ->whereBetween('ps.bill_date', [$from, $to]) 
+                ->orderBy('ps.bill_no') ->get();
         }
 
-        return view('pages.bill_number_report', compact('billSummary'));
+        return view('pages.bill_number_report', compact('billSummary', 'billDetails'));
     }
 }
 

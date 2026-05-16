@@ -419,6 +419,9 @@
                                                                     </option>
                                                                 @endforeach
                                                             </select>
+                                                            @if($item->modified)
+                                                                <span class="badge bg-success ms-2">Modified</span>
+                                                            @endif
                                                         @endif
                                                     </td>
 

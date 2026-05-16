@@ -227,6 +227,9 @@
                                             {{ $sale->customer_id == $customer->id ? 'selected' : '' }}>
                                             {{ $customer->name }} ({{ $customer->beat->name ?? 'No Beat' }})
                                         </option>
+                                        @if($sale->modified)
+                                            <span class="badge bg-success ms-2">Modified</span>
+                                        @endif
                                     @endforeach
                                 </select>
                                 @if($sale->modified)
