@@ -55,8 +55,8 @@ class AuthController extends Controller
             // Logged in user
             $user = Auth::user();
             // Send mail
-            Mail::to($user->email)->send(new SendNoticationMail($user));
-            return redirect()->intended(route('fileUpload'));
+            // Mail::to($user->email)->send(new SendNoticationMail($user));
+            return redirect()->intended(route('home'));
         }
 
         return back()->withErrors([

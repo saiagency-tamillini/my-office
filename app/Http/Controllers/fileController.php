@@ -28,9 +28,9 @@ use Illuminate\Validation\Rule;
 class fileController extends Controller
 {
     public function file_upload (){
-        if(is_accountant()) {
-            return redirect()->route('home')->with('error', 'You are not authorized to access this page.');
-        }
+        // if(is_accountant()) {
+        //     return redirect()->route('home')->with('error', 'You are not authorized to access this page.');
+        // }
         return view('files.file_upload');
     }
 
