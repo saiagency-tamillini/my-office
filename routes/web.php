@@ -70,7 +70,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'role:super_admin'])->group(function () {
     Route::resource('users', UserController::class);
 });
-Route::middleware(['auth', 'role:super_admin,admin'])->group(function () {
+Route::middleware(['auth', 'role:super_admin,admin,accountant'])->group(function () {
     Route::get('/sales-mail', [MailReportController::class, 'index'])->name('sales.mail.page');
 
     Route::post('/sales-mail/send', [MailReportController::class, 'send'])->name('sales.mail.send');
