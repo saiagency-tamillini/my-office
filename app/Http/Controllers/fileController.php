@@ -60,10 +60,10 @@ class fileController extends Controller
                 return back()->with('error', 'No valid data found');
             }
 
-            $this->storeExcelData($data);
+            $message = $this->storeExcelData($data);
 
             return redirect()->route('party-sales.index')
-                ->with('success', 'Excel data imported successfully');
+                ->with('success', $message);
             // ✅ Download Excel
             // return $this->downloadExcel($data, 'Party_Wise_Report.xlsx');
         } catch (\Exception $e) {
@@ -181,9 +181,11 @@ class fileController extends Controller
         return $finalData;
     }
 
-    private function storeExcelData(array $data): void
+    private function storeExcelData(array $data): string 
     {
-        DB::transaction(function () use ($data) {
+            $inserted = 0;
+            $skipped = 0;
+        DB::transaction(function () use ($data, &$inserted, &$skipped) {
             $currentBeatId = null;
             
             foreach ($data as $row) {
@@ -197,6 +199,12 @@ class fileController extends Controller
                 $billDate = null;
                 if (!empty($row['Bill Date'])) {
                     $billDate = \Carbon\Carbon::createFromFormat('d/m/Y', $row['Bill Date'])->format('Y-m-d');
+                }
+
+                $exists = PartySale::where('bill_no', $row['Bill No'])->exists();
+                if ($exists) {
+                    $skipped++;
+                    continue;
                 }
                 $customerName = strtoupper(trim($row['Customer Name']));
                 $customer = null;
@@ -214,6 +222,7 @@ class fileController extends Controller
                         'amount'         => $row['Amount'],
                         'balance'         => $row['Amount'],
                     ]);
+                    $inserted++;
                 } catch (QueryException $e) {
                     if ($e->getCode() == 23000) {
                         throw new \Exception(
@@ -224,6 +233,15 @@ class fileController extends Controller
                 }
             }
         });
+        if( $skipped == 0 && $inserted > 0) {
+            return $inserted . " records Excel data imported successfully";
+        }
+        if ($inserted == 0 && $skipped > 0) {
+            return "All data already inserted";
+
+        }
+        return $inserted . " new records inserted. " . 
+            $skipped . " duplicate records skipped.";
     }
 
     public function trip_sheet_report(Request $request){
