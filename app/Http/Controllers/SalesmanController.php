@@ -388,6 +388,63 @@ class SalesmanController extends Controller
 
         // return $pdf->download('salesman-report-'.$customer->name.'.pdf');
     }
+    // public function bill_number_report(Request $request)
+    // {
+    //     $billSummary = collect();
+    //     $billDetails = collect();
+
+    //     if ($request->filled('from_date')) {
+
+    //         $from = $request->from_date;
+    //         $to   = $request->to_date ?? $from;
+
+    //                     $billSummary = DB::table('party_sales as ps1')
+    //             ->selectRaw("
+    //                 REGEXP_SUBSTR(ps1.bill_no, '^[A-Za-z]+') as prefix,
+    //                 COUNT(*) as total_count,
+
+    //                 MIN(CAST(REGEXP_SUBSTR(ps1.bill_no, '[0-9]+') AS UNSIGNED)) as min_no,
+    //                 MAX(CAST(REGEXP_SUBSTR(ps1.bill_no, '[0-9]+') AS UNSIGNED)) as max_no
+    //             ")
+    //             ->whereBetween('ps1.bill_date', [$from, $to])
+    //             ->groupBy('prefix')
+    //             ->get();
+    //         $billSummary = $billSummary->map(function ($item) use ($from, $to) {
+
+    //             // START BILL (exact from DB)
+    //             $item->start_bill = DB::table('party_sales')
+    //                 ->whereBetween('bill_date', [$from, $to])
+    //                 ->whereRaw("REGEXP_SUBSTR(bill_no, '^[A-Za-z]+') = ?", [$item->prefix])
+    //                 ->orderByRaw("CAST(REGEXP_SUBSTR(bill_no, '[0-9]+') AS UNSIGNED) ASC")
+    //                 ->value('bill_no');
+
+    //             // END BILL (exact from DB)
+    //             $item->end_bill = DB::table('party_sales')
+    //                 ->whereBetween('bill_date', [$from, $to])
+    //                 ->whereRaw("REGEXP_SUBSTR(bill_no, '^[A-Za-z]+') = ?", [$item->prefix])
+    //                 ->orderByRaw("CAST(REGEXP_SUBSTR(bill_no, '[0-9]+') AS UNSIGNED) DESC")
+    //                 ->value('bill_no');
+
+    //             return $item;
+    //         });
+
+    //         $latestPayment = DB::table('payment_entries') 
+    //             ->select('bill_no', DB::raw('MAX(id) as latest_id')) 
+    //             ->groupBy('bill_no'); 
+    //         $billDetails = DB::table('party_sales as ps') 
+    //             ->leftJoin('customers as c', 'c.id', '=', 'ps.customer_id') 
+    //             ->leftJoinSub($latestPayment, 'lp', function ($join) { 
+    //                 $join->on('lp.bill_no', '=', 'ps.bill_no'); 
+    //             }) 
+    //             ->leftJoin('payment_entries as pe', 'pe.id', '=', 'lp.latest_id') 
+    //             ->select( 'ps.bill_no', 'c.name as customer_name', DB::raw("COALESCE(pe.status, 'Pending') as payment_status") ) 
+    //             ->whereBetween('ps.bill_date', [$from, $to]) 
+    //             ->orderBy('ps.bill_no') ->get();
+    //     }
+
+    //     return view('pages.bill_number_report', compact('billSummary', 'billDetails'));
+    // }
+    
     public function bill_number_report(Request $request)
     {
         $billSummary = collect();
@@ -396,53 +453,202 @@ class SalesmanController extends Controller
         if ($request->filled('from_date')) {
 
             $from = $request->from_date;
-            $to   = $request->to_date ?? $from;
+            $to = $request->to_date ?: $from;
 
-                        $billSummary = DB::table('party_sales as ps1')
+            /*
+            |--------------------------------------------------------------------------
+            | BILL SUMMARY
+            |--------------------------------------------------------------------------
+            */
+            $billSummary = DB::table('party_sales as ps1')
                 ->selectRaw("
                     REGEXP_SUBSTR(ps1.bill_no, '^[A-Za-z]+') as prefix,
                     COUNT(*) as total_count,
-
                     MIN(CAST(REGEXP_SUBSTR(ps1.bill_no, '[0-9]+') AS UNSIGNED)) as min_no,
                     MAX(CAST(REGEXP_SUBSTR(ps1.bill_no, '[0-9]+') AS UNSIGNED)) as max_no
                 ")
                 ->whereBetween('ps1.bill_date', [$from, $to])
-                ->groupBy('prefix')
+                ->whereRaw("REGEXP_SUBSTR(ps1.bill_no, '^[A-Za-z]+') IS NOT NULL")
+                ->groupByRaw("REGEXP_SUBSTR(ps1.bill_no, '^[A-Za-z]+')")
                 ->get();
+
+            /*
+            |--------------------------------------------------------------------------
+            | GET EXACT START AND END BILLS
+            |--------------------------------------------------------------------------
+            */
             $billSummary = $billSummary->map(function ($item) use ($from, $to) {
 
-                // START BILL (exact from DB)
                 $item->start_bill = DB::table('party_sales')
                     ->whereBetween('bill_date', [$from, $to])
-                    ->whereRaw("REGEXP_SUBSTR(bill_no, '^[A-Za-z]+') = ?", [$item->prefix])
-                    ->orderByRaw("CAST(REGEXP_SUBSTR(bill_no, '[0-9]+') AS UNSIGNED) ASC")
+                    ->whereRaw(
+                        "REGEXP_SUBSTR(bill_no, '^[A-Za-z]+') = ?",
+                        [$item->prefix]
+                    )
+                    ->orderByRaw(
+                        "CAST(REGEXP_SUBSTR(bill_no, '[0-9]+') AS UNSIGNED) ASC"
+                    )
                     ->value('bill_no');
 
-                // END BILL (exact from DB)
                 $item->end_bill = DB::table('party_sales')
                     ->whereBetween('bill_date', [$from, $to])
-                    ->whereRaw("REGEXP_SUBSTR(bill_no, '^[A-Za-z]+') = ?", [$item->prefix])
-                    ->orderByRaw("CAST(REGEXP_SUBSTR(bill_no, '[0-9]+') AS UNSIGNED) DESC")
+                    ->whereRaw(
+                        "REGEXP_SUBSTR(bill_no, '^[A-Za-z]+') = ?",
+                        [$item->prefix]
+                    )
+                    ->orderByRaw(
+                        "CAST(REGEXP_SUBSTR(bill_no, '[0-9]+') AS UNSIGNED) DESC"
+                    )
                     ->value('bill_no');
 
                 return $item;
             });
 
-            $latestPayment = DB::table('payment_entries') 
-                ->select('bill_no', DB::raw('MAX(id) as latest_id')) 
-                ->groupBy('bill_no'); 
-            $billDetails = DB::table('party_sales as ps') 
-                ->leftJoin('customers as c', 'c.id', '=', 'ps.customer_id') 
-                ->leftJoinSub($latestPayment, 'lp', function ($join) { 
-                    $join->on('lp.bill_no', '=', 'ps.bill_no'); 
-                }) 
-                ->leftJoin('payment_entries as pe', 'pe.id', '=', 'lp.latest_id') 
-                ->select( 'ps.bill_no', 'c.name as customer_name', DB::raw("COALESCE(pe.status, 'Pending') as payment_status") ) 
-                ->whereBetween('ps.bill_date', [$from, $to]) 
-                ->orderBy('ps.bill_no') ->get();
+            /*
+            |--------------------------------------------------------------------------
+            | GET LATEST PAYMENT ENTRY FOR EACH BILL
+            |--------------------------------------------------------------------------
+            */
+            $latestPayment = DB::table('payment_entries')
+                ->select('bill_no', DB::raw('MAX(id) as latest_id'))
+                ->groupBy('bill_no');
+
+            /*
+            |--------------------------------------------------------------------------
+            | GET EXISTING BILLS WITH CUSTOMER AND PAYMENT STATUS
+            |--------------------------------------------------------------------------
+            */
+            $existingBills = DB::table('party_sales as ps')
+                ->leftJoin('customers as c', 'c.id', '=', 'ps.customer_id')
+                ->leftJoinSub($latestPayment, 'lp', function ($join) {
+                    $join->on('lp.bill_no', '=', 'ps.bill_no');
+                })
+                ->leftJoin('payment_entries as pe', 'pe.id', '=', 'lp.latest_id')
+                ->select(
+                    'ps.bill_no',
+                    'c.name as customer_name',
+                    DB::raw("COALESCE(pe.status, 'Pending') as payment_status")
+                )
+                ->whereBetween('ps.bill_date', [$from, $to])
+                ->orderBy('ps.bill_no')
+                ->get();
+
+            /*
+            |--------------------------------------------------------------------------
+            | GROUP EXISTING BILLS BY PREFIX
+            |--------------------------------------------------------------------------
+            */
+            $groupedBills = $existingBills->groupBy(function ($bill) {
+
+                preg_match('/^[A-Za-z]+/', $bill->bill_no, $matches);
+
+                return $matches[0] ?? '';
+            });
+
+            /*
+            |--------------------------------------------------------------------------
+            | GENERATE MISSING BILL NUMBERS
+            |--------------------------------------------------------------------------
+            */
+            foreach ($groupedBills as $prefix => $bills) {
+
+                if ($prefix === '') {
+                    continue;
+                }
+
+                $existingByNumber = [];
+                $numberWidth = 0;
+
+                foreach ($bills as $bill) {
+
+                    preg_match('/[0-9]+/', $bill->bill_no, $matches);
+
+                    if (empty($matches[0])) {
+                        continue;
+                    }
+
+                    $numericPart = $matches[0];
+                    $number = (int) $numericPart;
+
+                    // Keep the original bill if duplicate numeric numbers exist.
+                    if (!isset($existingByNumber[$number])) {
+                        $existingByNumber[$number] = $bill;
+                    }
+
+                    // Preserve leading zeroes, e.g. AB001.
+                    $numberWidth = max(
+                        $numberWidth,
+                        strlen($numericPart)
+                    );
+                }
+
+                if (empty($existingByNumber)) {
+                    continue;
+                }
+
+                $minNumber = min(array_keys($existingByNumber));
+                $maxNumber = max(array_keys($existingByNumber));
+
+                /*
+                * Generate bills in numeric order.
+                */
+                for ($number = $minNumber; $number <= $maxNumber; $number++) {
+
+                    if (isset($existingByNumber[$number])) {
+
+                        // Existing bill: actual customer and payment status.
+                        $billDetails->push($existingByNumber[$number]);
+
+                    } else {
+
+                        // Missing bill: customer '-', status 'Failed'.
+                        $missingBill = new \stdClass();
+
+                        $missingBill->bill_no = $prefix
+                            . str_pad(
+                                (string) $number,
+                                $numberWidth,
+                                '0',
+                                STR_PAD_LEFT
+                            );
+
+                        $missingBill->customer_name = '-';
+                        $missingBill->payment_status = 'Failed';
+
+                        $billDetails->push($missingBill);
+                    }
+                }
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | SORT FINAL BILL DETAILS BY SERIES AND NUMERIC BILL NUMBER
+            |--------------------------------------------------------------------------
+            */
+            $billDetails = $billDetails
+                ->sortBy(function ($bill) {
+
+                    preg_match('/^[A-Za-z]+/', $bill->bill_no, $prefixMatch);
+                    preg_match('/[0-9]+/', $bill->bill_no, $numberMatch);
+
+                    $prefix = $prefixMatch[0] ?? '';
+                    $number = $numberMatch[0] ?? '0';
+
+                    return $prefix . '|' . str_pad(
+                        $number,
+                        20,
+                        '0',
+                        STR_PAD_LEFT
+                    );
+                })
+                ->values();
         }
 
-        return view('pages.bill_number_report', compact('billSummary', 'billDetails'));
+        return view(
+            'pages.bill_number_report',
+            compact('billSummary', 'billDetails')
+        );
     }
+
 }
 

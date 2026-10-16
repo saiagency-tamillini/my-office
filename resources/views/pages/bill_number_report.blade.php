@@ -207,8 +207,9 @@ use Illuminate\Support\Str;
 
                                                     <td>
 
-                                                        @if(strtolower($bill->payment_status) == 'complete')
-
+                                                        @if(strtolower($bill->payment_status) == 'failed')
+                                                            <span class="badge bg-danger">Failed</span>
+                                                        @elseif(strtolower($bill->payment_status) == 'complete')
                                                             <span class="badge bg-success">
                                                                 {{ $bill->payment_status }}
                                                             </span>
